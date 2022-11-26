@@ -33,3 +33,4 @@ packages/
 twitch_tokens.py
 __pycache__/
 settings.json
+launch.json
