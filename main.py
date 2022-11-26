@@ -2,6 +2,7 @@ from twitch_tokens import *
 from twitchio.ext import commands
 import time
 import random
+from bot_utilities import *
 
 class Bot(commands.Bot):
 
@@ -23,8 +24,8 @@ class Bot(commands.Bot):
         if message.author.name == 'moobot':
             await message.channel.send(f'@{message.author.name}, мубот соси')
         elif message.author.name == 'gufather':
-            time.sleep(1)
-            await message.channel.send('хороший бот')
+            time.sleep(2)
+            await message.channel.send(f'хороший бот {GetRandomEmotion()}')
         await self.handle_commands(message)
 
     #Команды
