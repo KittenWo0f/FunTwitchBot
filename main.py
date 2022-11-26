@@ -46,18 +46,24 @@ class Bot(commands.Bot):
         elif len(sArgs) == 1:
             await ctx.send(f'@{ctx.author.name} чмокнул @{random.choice(tuple(ctx.chatters)).name} 😘')
         else:
-            await ctx.send(f'@{ctx.author.name} чмокнул {sArgs[1]} 😘')
-            
+            if not isValidArgs(sArgs[1]):
+                await ctx.send(f'@{ctx.author.name}, AYAYA бана хочешь моего?')
+            else:
+                await ctx.send(f'@{ctx.author.name} чмокнул {str(sArgs[1])} 😘')
+                
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='чмо')
     async def chmo(self, ctx: commands.Context):
         sArgs = ctx.message.content.split(' ', 1)
-        if len(ctx.chatters == 0):
-            await ctx.send('В этом чате нет никого')
+        if len(ctx.chatters) == 0:
+            await ctx.send('В этом чате пусто PoroSad')
         elif len(sArgs) == 1:
             await ctx.send(f'@{ctx.author.name} назвал чмом @{random.choice(tuple(ctx.chatters)).name} 🤪')
         else:
-            await ctx.send(f'@{ctx.author.name} назвал чмом {sArgs[1]} 🤪')
+            if not isValidArgs(sArgs[1]):
+                await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
+            else:
+                await ctx.send(f'@{ctx.author.name} назвал чмом {str(sArgs[1])} 🤪')
             
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='база')
@@ -68,6 +74,8 @@ class Bot(commands.Bot):
     async def event_command_error(self, ctx, error: Exception) -> None:
         if isinstance(error, commands.CommandOnCooldown):
             await ctx.send(f'Команда "{error.command.name}" на кулдауне еще {int(error.retry_after)} сек.')
+        else:
+            print(error)
             
 
 bot = Bot()
