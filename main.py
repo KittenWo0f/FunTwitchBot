@@ -31,7 +31,11 @@ class Bot(commands.Bot):
     #Команды
     @commands.command(name='привет')
     async def hello(self, ctx: commands.Context):
-        await ctx.send(f'Hello {ctx.author.name}!')
+        await ctx.send(f'Здорова заебал, @{ctx.author.name}!')
+        
+    @commands.command(name='пока')
+    async def bye(self, ctx: commands.Context):
+        await ctx.send(f'Не уходи, @{ctx.author.name} PoroSad')
 
     @commands.command(name='пинг')
     async def ping(self, ctx: commands.Context):
@@ -46,8 +50,8 @@ class Bot(commands.Bot):
         elif len(sArgs) == 1:
             await ctx.send(f'@{ctx.author.name} чмокнул @{random.choice(tuple(ctx.chatters)).name} 😘')
         else:
-            if not isValidArgs(sArgs[1]):
-                await ctx.send(f'@{ctx.author.name}, AYAYA бана хочешь моего?')
+            if not IsValidArgs(sArgs[1]):
+                await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
             else:
                 await ctx.send(f'@{ctx.author.name} чмокнул {str(sArgs[1])} 😘')
                 
@@ -60,7 +64,7 @@ class Bot(commands.Bot):
         elif len(sArgs) == 1:
             await ctx.send(f'@{ctx.author.name} назвал чмом @{random.choice(tuple(ctx.chatters)).name} 🤪')
         else:
-            if not isValidArgs(sArgs[1]):
+            if not IsValidArgs(sArgs[1]):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
             else:
                 await ctx.send(f'@{ctx.author.name} назвал чмом {str(sArgs[1])} 🤪')
@@ -69,6 +73,11 @@ class Bot(commands.Bot):
     @commands.command(name='база')
     async def baza(self, ctx: commands.Context):
         await ctx.send(f'хуяза')
+        
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
+    @commands.command(name='анек')
+    async def anek(self, ctx: commands.Context):
+        await ctx.send(GetRandAnek())
 
     #Обработка исключений
     async def event_command_error(self, ctx, error: Exception) -> None:

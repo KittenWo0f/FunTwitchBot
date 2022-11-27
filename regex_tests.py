@@ -43,5 +43,4 @@ REGEX_IS_URL_TEST = r'''
   )
 )                       
 '''
-
-REGEX_SPEC_SYMB_RULE_TEST = r'''[@_!#$%^&*()<>?/\|\\\.}{~:]'''
+REGEX_SPEC_SYMB_RULE_TEST = r"[@_!#$%^&*()<>?/\|\\\.}{~:]{6,}"
