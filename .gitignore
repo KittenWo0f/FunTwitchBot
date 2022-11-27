@@ -31,7 +31,7 @@ _ReSharper*/
 #Nuget packages folder
 packages/
 #Some shit
-twitch_tokens.py
+bot_settings.py
 __pycache__/
 settings.json
 launch.json
