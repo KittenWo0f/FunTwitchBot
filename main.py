@@ -1,6 +1,10 @@
 from twitch_tokens import *
 from twitchio.ext import commands
+from twitchio.user import User
+from twitchio.channel import Channel
+
 import time
+import datetime
 import random
 from bot_utilities import *
 
@@ -85,7 +89,13 @@ class Bot(commands.Bot):
             await ctx.send(f'Команда "{error.command.name}" на кулдауне еще {int(error.retry_after)} сек.')
         else:
             print(error)
-            
+    
+    #Событие подключения к чату
+    async def event_join(self, channel: Channel, user: User):
+        if channel.name == user.name:
+            await channel.send(f'@{user.name}, привет стример! 😘')
+            print(f'{datetime.datetime.now()}: Стример в чате {user.name}')
+        print(f'{datetime.datetime.now()}: Пользователь {user.name} вошел в чат {channel.name}')
 
 bot = Bot()
 bot.run()
