@@ -1,4 +1,4 @@
-from twitch_tokens import *
+from bot_settings import *
 from twitchio.ext import commands
 from twitchio.user import User
 from twitchio.channel import Channel
@@ -82,6 +82,25 @@ class Bot(commands.Bot):
     @commands.command(name='анек')
     async def anek(self, ctx: commands.Context):
         await ctx.send(GetRandAnek())
+    
+    #Информационные команды
+    @commands.command(name='тг', aliases=['телеграм', 'телега', 'telegram', 'tg'])
+    async def telegram(self, ctx: commands.Context):
+        msg = telegrams.get(ctx.channel.name)
+        if(not msg == None):
+            await ctx.send(msg)
+    
+    @commands.command(name='вконтакте', aliases=['вк', 'vk', 'vkontakte'])
+    async def vkontakte(self, ctx: commands.Context):
+        msg = vks.get(ctx.channel.name)
+        if(not msg == None):
+            await ctx.send(msg)
+            
+    @commands.command(name='бусти', aliases=['boosty'])
+    async def boosty(self, ctx: commands.Context):
+        msg = boostys.get(ctx.channel.name)
+        if(not msg == None):
+            await ctx.send(msg)        
 
     #Обработка исключений
     async def event_command_error(self, ctx, error: Exception) -> None:
