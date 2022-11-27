@@ -1,4 +1,5 @@
 from bot_settings import *
+from some_data import *
 from twitchio.ext import commands
 from twitchio.user import User
 from twitchio.channel import Channel
@@ -27,9 +28,9 @@ class Bot(commands.Bot):
 
         if message.author.name == 'moobot':
             await message.channel.send(f'@{message.author.name}, мубот соси')
-        elif message.author.name == 'gufather':
-            time.sleep(2)
-            await message.channel.send(f'хороший бот {GetRandomEmotion()}')
+        # elif message.author.name == 'gufather':
+        #     time.sleep(2)
+        #     await message.channel.send(f'хороший бот {GetRandomEmotion()}')
         await self.handle_commands(message)
 
     #Команды
@@ -82,6 +83,13 @@ class Bot(commands.Bot):
     @commands.command(name='анек')
     async def anek(self, ctx: commands.Context):
         await ctx.send(GetRandAnek())
+    
+    @commands.cooldown(rate=1, per=86400, bucket=commands.Bucket.channel)
+    @commands.command(name='дыня', aliases=['melon'])
+    async def dinya(self, ctx: commands.Context):
+        for kuplet in dinya:
+            time.sleep(2)
+            await ctx.send(kuplet)
     
     #Информационные команды
     @commands.command(name='тг', aliases=['телеграм', 'телега', 'telegram', 'tg'])
