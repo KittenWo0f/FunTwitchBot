@@ -43,4 +43,5 @@ REGEX_IS_URL_TEST = r'''
   )
 )                       
 '''
-REGEX_SPEC_SYMB_RULE_TEST = r"[@_!#$%^&*()<>?/\|\\\.}{~:]{6,}"
+#REGEX_SPEC_SYMB_RULE_TEST = r"[@_!#$%^&*()<>?/\|\\\.}{~:]{6,}"
+REGEX_SPEC_SYMB_RULE_TEST = r'^[a-zA-Z0-9А-Яа-я]{1,20}$'

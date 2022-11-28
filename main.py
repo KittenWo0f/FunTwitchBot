@@ -28,12 +28,10 @@ class Bot(commands.Bot):
         #Опускание мубота
         if message.author.name == 'moobot':
             await message.channel.send(f'@{message.author.name}, мубот соси')
-        #Приветствия
-        if list(set(hellos) & set(str(message.content).split(" "))):
-            await message.channel.send(f'Привет, дорогой @{message.author.name} KonCha')
-        #Прощания
-        if list(set(byes) & set(str(message.content).split(" "))):
-            await message.channel.send(f'До скорого, дорогой @{message.author.name} KonCha')
+            
+        cust_com = custom_commands.get(str(message.content.lower()))
+        if(cust_com):
+            await message.channel.send(f'@{message.author.name}, {random.choice(cust_com)}')
             
         await self.handle_commands(message)
 
@@ -50,7 +48,7 @@ class Bot(commands.Bot):
     async def ping(self, ctx: commands.Context):
         await ctx.send(f'Понг {ctx.author.name}!')
 
-    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
+    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='чмок')
     async def chmok(self, ctx: commands.Context):
         sArgs = ctx.message.content.split(' ', 1)
@@ -62,7 +60,7 @@ class Bot(commands.Bot):
             if not IsValidArgs(sArgs[1]):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
             else:
-                await ctx.send(f'@{ctx.author.name} чмокнул {str(sArgs[1])} 😘')
+                await ctx.send(f'@{ctx.author.name} чмокнул @{str(sArgs[1])} 😘')
                 
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='чмо')
@@ -76,7 +74,7 @@ class Bot(commands.Bot):
             if not IsValidArgs(sArgs[1]):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
             else:
-                await ctx.send(f'@{ctx.author.name} назвал чмом {str(sArgs[1])} 🤪')
+                await ctx.send(f'@{ctx.author.name} назвал чмом @{str(sArgs[1])} 🤪')
             
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='база')

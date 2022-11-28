@@ -23,7 +23,7 @@ def IsValidArgs(args) -> bool:
     for arg in args.split():
         if CheckRegexRule(str(arg), REGEX_IS_URL_TEST):
             return False
-        if CheckRegexRule(str(arg), REGEX_SPEC_SYMB_RULE_TEST):
+        if not CheckRegexRule(str(arg), REGEX_SPEC_SYMB_RULE_TEST):
             return False
     return True
 
