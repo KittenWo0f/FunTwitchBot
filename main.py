@@ -39,6 +39,9 @@ class Bot(commands.Bot):
         if(check_str in custom_copypast_cmd):
             await message.channel.send(check_str)
             
+        if(str(f'@{self.nick}') in str(message.content).lower()):
+            await message.channel.send(f'@{message.author.name}, {random.choice(bot_messages)}')
+            
         await self.handle_commands(message)
 
     # #Команды
