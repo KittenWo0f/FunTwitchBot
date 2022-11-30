@@ -41,10 +41,22 @@ dinya = [
          '''Дыня.''',
          ]
 
-custom_commands = {
-    "привет": ['привет', 'здорова', 'ку', 'дарова', 'приветули', 'кукусики', 'hello'],
-    "пока": ['бб', 'пока', 'до завтра', 'пака', 'бубу', 'биби', 'bye', 'быбы']
+hellos = ['привет', 'здорова', 'ку', 'дарова', 'приветули', 'кукусики', 'hello']
+byes = ['бб', 'пока', 'до завтра', 'пака', 'бубу', 'биби', 'bye', 'быбы']
+
+custom_commands_with_tag = {
+    "привет": hellos,
+    "приветули": hellos,
+    "ку": hellos,
+    "здорова": hellos,
+    "hello": hellos,
+    "дороу": hellos,
+    "дратуте": hellos,
+    "дратути": hellos,
+    "пока": byes,
 }
+
+custom_copypast_cmd =set(['Kappa', 'KappaPride', 'Keepo', 'WutFace', 'CoolStoryBob', 'NotLikeThis', 'LUL', 'ResidentSleeper', '4Head', 'BabyRage', 'BibleThump', 'DansGame', 'FailFish', 'FallHalp', 'HeyGuys', 'KonCha', 'OSFrog', 'BloodTrail', 'TakeNRG', 'GayPride', 'GenderFluidPride', 'NonbinaryPride', 'LesbianPride', 'PansexualPride', 'TehePelo', 'PoroSad', 'Stare', 'SeemsGood', 'TwitchUnity', '<3', 'CoolCat', 'BegWan', 'PogChamp'])
 
 
 

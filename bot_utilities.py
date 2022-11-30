@@ -20,6 +20,8 @@ def CheckRegexRule(val, rule):
 def IsValidArgs(args) -> bool:
     if CheckRegexRule(str(args).replace(" ",""), REGEX_IS_URL_TEST):
             return False
+    if not CheckRegexRule(str(args), REGEX_SPEC_SYMB_RULE_TEST):
+            return False
     for arg in args.split():
         if CheckRegexRule(str(arg), REGEX_IS_URL_TEST):
             return False
@@ -34,3 +36,13 @@ def GetRandAnek() -> str:
     aneksHTML = soup.find_all('div', class_ = 'tecst')
     aneksList = random.choice(tuple(aneksHTML)).find_all(text = True, recursive=False)
     return ' '.join(aneksList).strip()
+
+def GetTodayHoliday() -> str:
+    url = f'https://kakoysegodnyaprazdnik.ru//'
+    header = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
+    }
+    req = requests.get(url, headers=header)
+    soup = BeautifulSoup(req.content.decode('utf-8','ignore'), "html.parser")
+    holiHTML = random.choice(soup.find_all('span', itemprop='text')).find_all(text = True, recursive=False)[0]
+    return str(holiHTML)

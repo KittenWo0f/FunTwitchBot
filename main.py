@@ -9,6 +9,8 @@ import datetime
 import random
 from bot_utilities import *
 
+from gpiozero import CPUTemperature
+
 class Bot(commands.Bot):
 
     #Инициализация бота
@@ -28,10 +30,14 @@ class Bot(commands.Bot):
         #Опускание мубота
         if message.author.name == 'moobot':
             await message.channel.send(f'@{message.author.name}, мубот соси')
-            
-        cust_com = custom_commands.get(str(message.content.lower()))
+
+        check_str = message.content.split(" ")[0]
+        cust_com = custom_commands_with_tag.get(str(check_str.lower()))
         if(cust_com):
             await message.channel.send(f'@{message.author.name}, {random.choice(cust_com)}')
+        
+        if(check_str in custom_copypast_cmd):
+            await message.channel.send(check_str)
             
         await self.handle_commands(message)
 
@@ -60,7 +66,7 @@ class Bot(commands.Bot):
             if not IsValidArgs(sArgs[1]):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
             else:
-                await ctx.send(f'@{ctx.author.name} чмокнул @{str(sArgs[1])} 😘')
+                await ctx.send(f'@{ctx.author.name} чмокнул {str(sArgs[1])} 😘')
                 
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='чмо')
@@ -74,7 +80,7 @@ class Bot(commands.Bot):
             if not IsValidArgs(sArgs[1]):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
             else:
-                await ctx.send(f'@{ctx.author.name} назвал чмом @{str(sArgs[1])} 🤪')
+                await ctx.send(f'@{ctx.author.name} назвал чмом {str(sArgs[1])} 🤪')
             
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='база')
@@ -85,8 +91,13 @@ class Bot(commands.Bot):
     @commands.command(name='анек', aliases=['кринж'])
     async def anek(self, ctx: commands.Context):
         await ctx.send(GetRandAnek())
+        
+    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
+    @commands.command(name='праздник', aliases=['holiday'])
+    async def Holiday(self, ctx: commands.Context):
+        await ctx.send(GetTodayHoliday())
     
-    @commands.cooldown(rate=1, per=86400, bucket=commands.Bucket.channel)
+    @commands.cooldown(rate=1, per=3600, bucket=commands.Bucket.channel)
     @commands.command(name='дыня', aliases=['melon'])
     async def dinya(self, ctx: commands.Context):
         if (not ctx.channel.name == 'gufovicky'):
@@ -117,6 +128,13 @@ class Bot(commands.Bot):
     @commands.command(name='help', aliases=['commands', 'команды', 'помощь'])
     async def help_bot(self, ctx: commands.Context):
         await ctx.send(f'@{ctx.author.name} Я бот и я могу: !пинг, !чмок, !чмо, !база, !кринж. На некоторых каналах: !вк, !бусти, !тг')
+        
+    #Команды для белого списка 
+    @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
+    async def help_bot(self, ctx: commands.Context):
+        if ctx.author.name in white_list:
+            cpuT = CPUTemperature()
+            await ctx.send(f'Моя горячесть равна {cpuT.temperature} градусам')
 
     #Обработка исключений
     async def event_command_error(self, ctx, error: Exception) -> None:
@@ -128,9 +146,9 @@ class Bot(commands.Bot):
     #Событие подключения к чату
     async def event_join(self, channel: Channel, user: User):
         print(f'{datetime.datetime.now()}: Пользователь {user.name} вошел в чат {channel.name}')
-        if user.name == 'moobot':
-            await channel.send(f'@{user.name}, че приперся?')
-        elif channel.name == user.name:
+        # if user.name == 'moobot':
+        #     await channel.send(f'@{user.name}, че приперся?')
+        if channel.name == user.name:
             await channel.send(f'@{user.name}, привет стример! 😘')
             print(f'{datetime.datetime.now()}: Стример в чате {user.name}')
 
