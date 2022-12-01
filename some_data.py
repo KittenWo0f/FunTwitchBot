@@ -56,9 +56,9 @@ custom_commands_with_tag = {
     "пока": byes
 }
 
-custom_copypast_cmd =set(['ф5 ф5 PogChamp PogChamp', 'ф5 ПОТЕКЛО PogChamp PogChamp', 'Kappa', 'KappaPride', 'Keepo', 'WutFace', 'CoolStoryBob', 'NotLikeThis', 'LUL', 'ResidentSleeper', '4Head', 'BabyRage', 'BibleThump', 'DansGame', 'FailFish', 'FallHalp', 'HeyGuys', 'KonCha', 'OSFrog', 'BloodTrail', 'TakeNRG', 'GayPride', 'GenderFluidPride', 'NonbinaryPride', 'LesbianPride', 'PansexualPride', 'TehePelo', 'PoroSad', 'Stare', 'SeemsGood', 'TwitchUnity', '<3', 'CoolCat', 'BegWan', 'PogChamp'])
+custom_copypast_cmd =set(['D:', 'Kappa', 'KappaPride', 'Keepo', 'WutFace', 'CoolStoryBob', 'NotLikeThis', 'LUL', 'ResidentSleeper', '4Head', 'BabyRage', 'BibleThump', 'DansGame', 'FailFish', 'FallHalp', 'HeyGuys', 'KonCha', 'OSFrog', 'BloodTrail', 'TakeNRG', 'GayPride', 'GenderFluidPride', 'NonbinaryPride', 'LesbianPride', 'PansexualPride', 'TehePelo', 'PoroSad', 'Stare', 'SeemsGood', 'TwitchUnity', '<3', 'CoolCat', 'BegWan', 'PogChamp'])
 
-bot_messages = ['да', 'нет', 'пошел ты', 'чмок тя', 'фу', 'а давай', 'соси', 'засосал', 'будущее туманно']
+bot_messages = ['да', 'нет', 'чмок тя', 'полностью согласен', 'полностью не согласен', 'а давай', 'страстно засосал', 'будущее туманно', 'давай дружить', '😘', 'а ты сама милота', 'давай ебаться', 'я сплю', 'ну ок']
 
 
 
