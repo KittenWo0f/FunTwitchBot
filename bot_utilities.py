@@ -5,6 +5,8 @@ from regex_tests import *
 from bs4 import BeautifulSoup
 import requests
 import random
+#Для подсчета спецсимволов
+from collections import Counter
 
 def GetRandomEmotion() -> str:
     emotions = ['GunRun', 'GlitchCat', 'FallHalp', 'FallWinning', 'BrokeBack', 'BloodTrail', 'CaitlynS', 'CarlSmile']
@@ -19,9 +21,11 @@ def CheckRegexRule(val, rule):
 
 def IsValidArgs(args) -> bool:
     if CheckRegexRule(str(args).replace(" ",""), REGEX_IS_URL_TEST):
-            return False
+        return False
     if not CheckRegexRule(str(args), REGEX_SPEC_SYMB_RULE_TEST):
-            return False
+        return False
+    if GetCharCnt(args, set(SPEC_SYMBOLS)) > 7:
+        return False
     for arg in args.split():
         if CheckRegexRule(str(arg), REGEX_IS_URL_TEST):
             return False
@@ -30,12 +34,19 @@ def IsValidArgs(args) -> bool:
     return True
 
 def GetRandAnek() -> str:
-    url = f'https://anekdotbar.ru/korotkie/page/{random.randrange(1,33)}/'
+    # url = f'https://anekdotbar.ru/korotkie/page/{random.randrange(1,33)}/'
+    url = f'https://anekdotbar.ru/pro-shtirlica/page/{random.randrange(1,8)}/'
     req = requests.get(url)
     soup = BeautifulSoup(req.text, "html.parser")
     aneksHTML = soup.find_all('div', class_ = 'tecst')
-    aneksList = random.choice(tuple(aneksHTML)).find_all(text = True, recursive=False)
-    return ' '.join(aneksList).strip()
+    
+    fullAnek = ''
+    while True:
+        aneksList = random.choice(tuple(aneksHTML)).find_all(text = True, recursive=False)
+        fullAnek = ' '.join(aneksList).strip()
+        if len(fullAnek) < 250:
+            break
+    return fullAnek
 
 def GetTodayHoliday() -> str:
     url = f'https://kakoysegodnyaprazdnik.ru//'
@@ -46,3 +57,10 @@ def GetTodayHoliday() -> str:
     soup = BeautifulSoup(req.content.decode('utf-8','ignore'), "html.parser")
     holiHTML = random.choice(soup.find_all('span', itemprop='text')).find_all(text = True, recursive=False)[0]
     return str(holiHTML)
+
+def GetCharCnt(string, symbols) -> int:
+    cnt = 0
+    counter = Counter(string)
+    for char in symbols:
+        cnt += counter[char]
+    return cnt

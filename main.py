@@ -15,7 +15,7 @@ class Bot(commands.Bot):
 
     #Инициализация бота
     def __init__(self):
-        super().__init__(token=ACCESS_TOKEN, prefix='!', initial_channels=INITIAL_CHANNELS)
+        super().__init__(token=ACCESS_TOKEN, prefix=PREFIX, initial_channels=INITIAL_CHANNELS)
 
     #Событие готовности бота
     async def event_ready(self):
@@ -27,6 +27,10 @@ class Bot(commands.Bot):
         if message.echo:
             return
         print(f'{message.timestamp}({message.channel.name}){message.author.name}:{message.content}')
+        
+        if str(message.content).startswith(PREFIX):
+            await self.handle_commands(message)
+        
         #Опускание мубота
         if message.author.name == 'moobot':
             await message.channel.send(f'@{message.author.name}, мубот соси')
@@ -39,10 +43,12 @@ class Bot(commands.Bot):
         if(check_str in custom_copypast_cmd):
             await message.channel.send(check_str)
             
+        if message.content.split(" ")[-1] in custom_copypast_cmd:
+            await message.channel.send(message.content.split(" ")[-1])
+            
         if(str(f'@{self.nick}') in str(message.content).lower()):
             await message.channel.send(f'@{message.author.name}, {random.choice(bot_messages)}')
             
-        await self.handle_commands(message)
 
     # #Команды
     # @commands.command(name='привет', aliases=['hello'])
@@ -60,32 +66,36 @@ class Bot(commands.Bot):
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='чмок')
     async def chmok(self, ctx: commands.Context):
-        sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
+        sArgs = ctx.message.content.split(' ', 1)
         if len(ctx.chatters) == 0:
             await ctx.send('В этом чате некого чмокнуть PoroSad')
         elif len(sArgs) == 1:
             await ctx.send(f'@{ctx.author.name} чмокнул @{random.choice(tuple(ctx.chatters)).name} 😘')
         else:
-            if not IsValidArgs(sArgs[1]):
+            if not IsValidArgs(sArgs[1].rstrip(' ')):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
             elif ctx.author.name in sArgs[1].lower():
                 await ctx.send(f'@{ctx.author.name} боюсь что это нереально? Давай лучше я 😘')
+            elif self.nick in sArgs[1].lower():
+                await ctx.send(f'@{ctx.author.name}, и тебе чмок 😘')
             else:
                 await ctx.send(f'@{ctx.author.name} чмокнул {str(sArgs[1])} 😘')
                 
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='чмо')
     async def chmo(self, ctx: commands.Context):
-        sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
+        sArgs = ctx.message.content.split(' ', 1)
         if len(ctx.chatters) == 0:
             await ctx.send('В этом чате пусто PoroSad')
         elif len(sArgs) == 1:
             await ctx.send(f'@{ctx.author.name} назвал чмом @{random.choice(tuple(ctx.chatters)).name} 🤪')
         else:
-            if not IsValidArgs(sArgs[1]):
+            if not IsValidArgs(sArgs[1].rstrip(' ')):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
             elif ctx.author.name in sArgs[1].lower():
                 await ctx.send(f'@{ctx.author.name} не надо так с собой Stare')
+            elif self.nick in sArgs[1].lower():
+                await ctx.send(f'@{ctx.author.name}, что я тебе плохого сделал? PoroSad')
             else:
                 await ctx.send(f'@{ctx.author.name} назвал чмом {str(sArgs[1])} 🤪')
             
@@ -134,7 +144,7 @@ class Bot(commands.Bot):
         
     @commands.command(name='help', aliases=['commands', 'команды', 'помощь'])
     async def help_bot(self, ctx: commands.Context):
-        await ctx.send(f'@{ctx.author.name} Я бот и я могу: !пинг, !чмок, !чмо, !база, !кринж. На некоторых каналах: !вк, !бусти, !тг')
+        await ctx.send(f'@{ctx.author.name} Я бот и я могу: !пинг, !чмок, !чмо, !база, !кринж, !анек. На некоторых каналах: !вк, !бусти, !тг')
         
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
