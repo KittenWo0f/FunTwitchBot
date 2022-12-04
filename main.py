@@ -60,7 +60,7 @@ class Bot(commands.Bot):
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='чмок')
     async def chmok(self, ctx: commands.Context):
-        sArgs = ctx.message.content.strip().split(' ', 1)
+        sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
         if len(ctx.chatters) == 0:
             await ctx.send('В этом чате некого чмокнуть PoroSad')
         elif len(sArgs) == 1:
@@ -68,13 +68,15 @@ class Bot(commands.Bot):
         else:
             if not IsValidArgs(sArgs[1]):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
+            elif ctx.author.name in sArgs[1].lower():
+                await ctx.send(f'@{ctx.author.name} боюсь что это нереально? Давай лучше я 😘')
             else:
                 await ctx.send(f'@{ctx.author.name} чмокнул {str(sArgs[1])} 😘')
                 
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='чмо')
     async def chmo(self, ctx: commands.Context):
-        sArgs = ctx.message.content.strip().split(' ', 1)
+        sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
         if len(ctx.chatters) == 0:
             await ctx.send('В этом чате пусто PoroSad')
         elif len(sArgs) == 1:
@@ -82,6 +84,8 @@ class Bot(commands.Bot):
         else:
             if not IsValidArgs(sArgs[1]):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
+            elif ctx.author.name in sArgs[1].lower():
+                await ctx.send(f'@{ctx.author.name} не надо так с собой Stare')
             else:
                 await ctx.send(f'@{ctx.author.name} назвал чмом {str(sArgs[1])} 🤪')
             
