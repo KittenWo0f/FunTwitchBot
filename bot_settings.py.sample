@@ -1,5 +1,5 @@
 #Файл с настройками бота
-
+#Для использования переименовтать в bot_settings.py
 #Данные бота для инициализации. Получить можно тут - https://twitchtokengenerator.com/
 ACCESS_TOKEN = ""
 REFRESH_TOKEN = ""
