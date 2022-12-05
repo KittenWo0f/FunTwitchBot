@@ -7,6 +7,7 @@ from twitchio.channel import Channel
 import time
 import datetime
 import random
+import re
 from bot_utilities import *
 
 from gpiozero import CPUTemperature
@@ -30,24 +31,26 @@ class Bot(commands.Bot):
         
         if str(message.content).startswith(PREFIX):
             await self.handle_commands(message)
+            return
         
         #Опускание мубота
         if message.author.name == 'moobot':
             await message.channel.send(f'@{message.author.name}, мубот соси')
+            return
 
-        check_str = message.content.split(" ")[0]
+        check_str = re.split(r',|!|;|\.|\?', message.content)[0]
         cust_com = custom_commands_with_tag.get(str(check_str.lower()))
         if(cust_com):
             await message.channel.send(f'@{message.author.name}, {random.choice(cust_com)}')
+            return
         
         if(check_str in custom_copypast_cmd):
             await message.channel.send(check_str)
-            
-        if message.content.split(" ")[-1] in custom_copypast_cmd:
-            await message.channel.send(message.content.split(" ")[-1])
+            return
             
         if(str(f'@{self.nick}') in str(message.content).lower()):
             await message.channel.send(f'@{message.author.name}, {random.choice(bot_messages)}')
+            return
             
 
     # #Команды
@@ -66,7 +69,7 @@ class Bot(commands.Bot):
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='чмок')
     async def chmok(self, ctx: commands.Context):
-        sArgs = ctx.message.content.split(' ', 1)
+        sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
         if len(ctx.chatters) == 0:
             await ctx.send('В этом чате некого чмокнуть PoroSad')
         elif len(sArgs) == 1:
@@ -84,7 +87,7 @@ class Bot(commands.Bot):
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='чмо')
     async def chmo(self, ctx: commands.Context):
-        sArgs = ctx.message.content.split(' ', 1)
+        sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
         if len(ctx.chatters) == 0:
             await ctx.send('В этом чате пусто PoroSad')
         elif len(sArgs) == 1:
@@ -120,7 +123,16 @@ class Bot(commands.Bot):
         if (not ctx.channel.name == 'gufovicky'):
             return
         for kuplet in dinya:
-            time.sleep(2)
+            time.sleep(1.5)
+            await ctx.send(kuplet.replace("\n", " "))
+            
+    @commands.cooldown(rate=1, per=1800, bucket=commands.Bucket.channel)
+    @commands.command(name='хрюковский')
+    async def hrykovsciy(self, ctx: commands.Context):
+        if (not ctx.channel.name == 'gufovicky'):
+            return
+        for kuplet in hrykovskiy:
+            time.sleep(1.5)
             await ctx.send(kuplet.replace("\n", " "))
     
     #Информационные команды
