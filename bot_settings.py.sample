@@ -1,0 +1,26 @@
+#Файл с настройками бота
+
+#Данные бота для инициализации. Получить можно тут - https://twitchtokengenerator.com/
+ACCESS_TOKEN = ""
+REFRESH_TOKEN = ""
+CLIENT_ID = ""
+#Список каналов на которых будет работать бот
+INITIAL_CHANNELS = []
+#Префикс перед командами
+PREFIX = '!'
+
+#Информационные команды для разных каналов
+telegrams = {
+    "channelName": "message"
+}
+
+boostys = {
+    "channelName": "message"
+}
+
+vks = {
+    "channelName": "message"
+}
+
+#Список пользоватлей для некоторых системных команд
+white_list = [] 
