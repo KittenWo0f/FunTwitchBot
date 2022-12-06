@@ -117,24 +117,19 @@ class Bot(commands.Bot):
     async def Holiday(self, ctx: commands.Context):
         await ctx.send(GetTodayHoliday())
     
-    @commands.cooldown(rate=1, per=3600, bucket=commands.Bucket.channel)
+    @commands.cooldown(rate=1, per=86400, bucket=commands.Bucket.channel)
     @commands.command(name='дыня', aliases=['melon'])
     async def dinya(self, ctx: commands.Context):
         if (not ctx.channel.name == 'gufovicky'):
+            return
+        randStrength = random.randint(1, 100)
+        if(not randStrength == 100):
+            await ctx.send(f'@{ctx.author.name}, твоя сила запуска дыни "{randStrength}", для запуска необходимо "100". В следующий раз повезет 4Head')
             return
         for kuplet in dinya:
             time.sleep(1.5)
             await ctx.send(kuplet.replace("\n", " "))
             
-    @commands.cooldown(rate=1, per=1800, bucket=commands.Bucket.channel)
-    @commands.command(name='хрюковский')
-    async def hrykovsciy(self, ctx: commands.Context):
-        if (not ctx.channel.name == 'gufovicky'):
-            return
-        for kuplet in hrykovskiy:
-            time.sleep(1.5)
-            await ctx.send(kuplet.replace("\n", " "))
-    
     #Информационные команды
     @commands.command(name='тг', aliases=['телеграм', 'телега', 'telegram', 'tg'])
     async def telegram(self, ctx: commands.Context):
