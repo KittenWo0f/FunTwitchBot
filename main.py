@@ -38,6 +38,7 @@ class Bot(commands.Bot):
             await message.channel.send(f'@{message.author.name}, мубот соси')
             return
 
+        #Приветствия и покатствия
         check_str = re.split(r',|!|;|\.|\?', message.content)[0]
         cust_com = custom_commands_with_tag.get(str(check_str.lower()))
         if(cust_com):
@@ -51,84 +52,6 @@ class Bot(commands.Bot):
         if(str(f'@{self.nick}') in str(message.content).lower()):
             await message.channel.send(f'@{message.author.name}, {random.choice(bot_messages)}')
             return
-            
-
-    # #Команды
-    # @commands.command(name='привет', aliases=['hello'])
-    # async def hello(self, ctx: commands.Context):
-    #     await ctx.send(f'Здорова заебал, @{ctx.author.name}!')
-        
-    # @commands.command(name='пока', aliases=['bye'])
-    # async def bye(self, ctx: commands.Context):
-    #     await ctx.send(f'Не уходи, @{ctx.author.name} PoroSad')
-
-    @commands.command(name='пинг', aliases=['ping'])
-    async def ping(self, ctx: commands.Context):
-        await ctx.send(f'Понг {ctx.author.name}!')
-
-    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
-    @commands.command(name='чмок')
-    async def chmok(self, ctx: commands.Context):
-        sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
-        if len(ctx.chatters) == 0:
-            await ctx.send('В этом чате некого чмокнуть PoroSad')
-        elif len(sArgs) == 1:
-            await ctx.send(f'@{ctx.author.name} чмокнул @{random.choice(tuple(ctx.chatters)).name} 😘')
-        else:
-            if not IsValidArgs(sArgs[1].rstrip(' ')):
-                await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
-            elif ctx.author.name in sArgs[1].lower():
-                await ctx.send(f'@{ctx.author.name} боюсь что это нереально? Давай лучше я 😘')
-            elif self.nick in sArgs[1].lower():
-                await ctx.send(f'@{ctx.author.name}, и тебе чмок 😘')
-            else:
-                await ctx.send(f'@{ctx.author.name} чмокнул {str(sArgs[1])} 😘')
-                
-    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
-    @commands.command(name='чмо')
-    async def chmo(self, ctx: commands.Context):
-        sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
-        if len(ctx.chatters) == 0:
-            await ctx.send('В этом чате пусто PoroSad')
-        elif len(sArgs) == 1:
-            await ctx.send(f'@{ctx.author.name} назвал чмом @{random.choice(tuple(ctx.chatters)).name} 🤪')
-        else:
-            if not IsValidArgs(sArgs[1].rstrip(' ')):
-                await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
-            elif ctx.author.name in sArgs[1].lower():
-                await ctx.send(f'@{ctx.author.name} не надо так с собой Stare')
-            elif self.nick in sArgs[1].lower():
-                await ctx.send(f'@{ctx.author.name}, что я тебе плохого сделал? PoroSad')
-            else:
-                await ctx.send(f'@{ctx.author.name} назвал чмом {str(sArgs[1])} 🤪')
-            
-    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
-    @commands.command(name='база')
-    async def baza(self, ctx: commands.Context):
-        await ctx.send(f'хуяза')
-        
-    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
-    @commands.command(name='анек', aliases=['кринж'])
-    async def anek(self, ctx: commands.Context):
-        await ctx.send(GetRandAnek())
-        
-    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
-    @commands.command(name='праздник', aliases=['holiday'])
-    async def Holiday(self, ctx: commands.Context):
-        await ctx.send(GetTodayHoliday())
-    
-    @commands.cooldown(rate=1, per=86400, bucket=commands.Bucket.channel)
-    @commands.command(name='дыня', aliases=['melon'])
-    async def dinya(self, ctx: commands.Context):
-        if (not ctx.channel.name == 'gufovicky'):
-            return
-        randStrength = random.randint(1, 100)
-        if(not randStrength == 100):
-            await ctx.send(f'@{ctx.author.name}, твоя сила запуска дыни "{randStrength}", для запуска необходимо "100". В следующий раз повезет 4Head')
-            return
-        for kuplet in dinya:
-            time.sleep(1.5)
-            await ctx.send(kuplet.replace("\n", " "))
             
     #Информационные команды
     @commands.command(name='тг', aliases=['телеграм', 'телега', 'telegram', 'tg'])
@@ -148,14 +71,19 @@ class Bot(commands.Bot):
         msg = boostys.get(ctx.channel.name)
         if(not msg == None):
             await ctx.send(msg)
+            
+    @commands.command(name='смайлы', aliases=['7tv', 'smiles', 'emoji', 'смайлики'])
+    async def SpecialSmiles(self, ctx: commands.Context):
+        if ctx.channel.name in ALLOW_URL:
+            await ctx.send('Чтобы видеть и посылать крутые смайлы в чате устанавливайте расширение для браузера по ссылке: https://7tv.app/')
         
     @commands.command(name='help', aliases=['commands', 'команды', 'помощь'])
     async def help_bot(self, ctx: commands.Context):
-        await ctx.send(f'@{ctx.author.name} Я бот и я могу: !пинг, !чмок, !чмо, !база, !кринж, !анек. На некоторых каналах: !вк, !бусти, !тг')
+        await ctx.send(f'@{ctx.author.name} Я бот и я ничего не умею 4Head')
         
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
-    async def help_bot(self, ctx: commands.Context):
+    async def temperature(self, ctx: commands.Context):
         if ctx.author.name in white_list:
             cpuT = CPUTemperature()
             await ctx.send(f'Моя горячесть равна {cpuT.temperature} градусам')
@@ -163,15 +91,13 @@ class Bot(commands.Bot):
     #Обработка исключений
     async def event_command_error(self, ctx, error: Exception) -> None:
         if isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(f'Команда "{error.command.name}" на кулдауне еще {int(error.retry_after)} сек.')
+            await ctx.send(f'Команда "{error.command.name}" заряжается, еще {int(error.retry_after)} сек.')
         else:
             print(error)
     
     #Событие подключения к чату
     async def event_join(self, channel: Channel, user: User):
         print(f'{datetime.datetime.now()}: Пользователь {user.name} вошел в чат {channel.name}')
-        # if user.name == 'moobot':
-        #     await channel.send(f'@{user.name}, че приперся?')
         if channel.name == user.name:
             await channel.send(f'@{user.name}, привет стример! 😘')
             print(f'{datetime.datetime.now()}: Стример в чате {user.name}')
