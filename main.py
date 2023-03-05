@@ -41,11 +41,11 @@ class Bot(commands.Bot):
         #Приветствия и покатствия
         check_str = re.split(r',|!|;|\.|\?', message.content)[0]
         cust_com = custom_commands_with_tag.get(str(check_str.lower()))
-        if(cust_com):
+        if cust_com and message.channel.name == 'gufovicky':
             await message.channel.send(f'@{message.author.name}, {random.choice(cust_com)}')
             return
         
-        if(check_str in custom_copypast_cmd):
+        if check_str in custom_copypast_cmd and message.channel.name == 'gufovicky':
             await message.channel.send(check_str)
             return
             
@@ -66,12 +66,18 @@ class Bot(commands.Bot):
         if(not msg == None):
             await ctx.send(msg)
             
-    @commands.command(name='бусти', aliases=['boosty'])
+    @commands.command(name='бусти', aliases=['boosty', 'кошка'])
     async def boosty(self, ctx: commands.Context):
         msg = boostys.get(ctx.channel.name)
         if(not msg == None):
             await ctx.send(msg)
-            
+                    
+    @commands.command(name='донат', aliases=['donat', 'пожертвование'])
+    async def donat(self, ctx: commands.Context):
+        msg = donats.get(ctx.channel.name)
+        if(not msg == None):
+            await ctx.send(msg)
+    
     @commands.command(name='смайлы', aliases=['7tv', 'smiles', 'emoji', 'смайлики'])
     async def SpecialSmiles(self, ctx: commands.Context):
         if ctx.channel.name in ALLOW_URL:
@@ -82,6 +88,12 @@ class Bot(commands.Bot):
         await ctx.send(f'@{ctx.author.name} Я бот и я ничего не умею 4Head')
         
     #Команды для белого списка 
+    @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
+    async def temperature(self, ctx: commands.Context):
+        if ctx.author.name in white_list:
+            cpuT = CPUTemperature()
+            await ctx.send(f'Моя горячесть равна {cpuT.temperature} градусам')
+            
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
     async def temperature(self, ctx: commands.Context):
         if ctx.author.name in white_list:
