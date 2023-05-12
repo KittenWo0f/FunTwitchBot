@@ -13,11 +13,18 @@ from gpiozero import CPUTemperature
 
 class Bot(commands.Bot):
 
+    name = str()
     last_seen_dict = dict()
     
     #Инициализация бота
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
+        tmpfile = load_obj(self.name + '_last_seen_dict')
+        if tmpfile: self.last_seen_dict = tmpfile
         super().__init__(token=ACCESS_TOKEN, prefix=PREFIX, initial_channels=INITIAL_CHANNELS)
+        
+    def save_objects(self):
+        save_obj(self.last_seen_dict, self.name + '_last_seen_dict')
 
     #Событие готовности бота
     async def event_ready(self):
