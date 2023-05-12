@@ -8,6 +8,8 @@ CLIENT_ID = ""
 INITIAL_CHANNELS = []
 #Список каналов на которых допустимы ссылки для бота
 ALLOW_URL = []
+#Список каналов в которых допустима копипаста (копирует некоторые фразы и смайлы, содержатся в custom_commands_with_tag и custom_copypast_cmd файла some_data)
+ALLOW_FLOOD = []
 #Префикс перед командами
 PREFIX = '!'
 
