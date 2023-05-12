@@ -6,6 +6,8 @@ REFRESH_TOKEN = ""
 CLIENT_ID = ""
 #Список каналов на которых будет работать бот
 INITIAL_CHANNELS = []
+#Список каналов на которых допустимы ссылки для бота
+ALLOW_URL = []
 #Префикс перед командами
 PREFIX = '!'
 
@@ -19,6 +21,10 @@ boostys = {
 }
 
 vks = {
+    "channelName": "message"
+}
+
+donats = {
     "channelName": "message"
 }
 

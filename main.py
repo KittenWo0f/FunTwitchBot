@@ -78,12 +78,12 @@ class Bot(commands.Bot):
         if(not msg == None):
             await ctx.send(msg)
     
-    @commands.command(name='смайлы', aliases=['7tv', 'smiles', 'emoji', 'смайлики'])
+    @commands.command(name='смайлы', aliases=['7tv', 'smiles', 'emoji', 'смайлики', 'эмоуты'])
     async def SpecialSmiles(self, ctx: commands.Context):
         if ctx.channel.name in ALLOW_URL:
             await ctx.send('Чтобы видеть и посылать крутые смайлы в чате устанавливайте расширение для браузера по ссылке: https://7tv.app/')
         
-    @commands.command(name='help', aliases=['commands', 'команды', 'помощь'])
+    @commands.command(name='help', aliases=['commands', 'команды', 'помощь', 'бот'])
     async def help_bot(self, ctx: commands.Context):
         await ctx.send(f'@{ctx.author.name} Я бот и я ничего не умею 4Head')
         
