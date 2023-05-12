@@ -93,12 +93,6 @@ class Bot(commands.Bot):
         if ctx.author.name in white_list:
             cpuT = CPUTemperature()
             await ctx.send(f'Моя горячесть равна {cpuT.temperature} градусам')
-            
-    @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
-    async def temperature(self, ctx: commands.Context):
-        if ctx.author.name in white_list:
-            cpuT = CPUTemperature()
-            await ctx.send(f'Моя горячесть равна {cpuT.temperature} градусам')
 
     #Обработка исключений
     async def event_command_error(self, ctx, error: Exception) -> None:
