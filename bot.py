@@ -99,9 +99,24 @@ class Bot(commands.Bot):
     @commands.command(name='lastseen', aliases=['где', 'когда', 'когдавидели'])
     async def last_seen(self, ctx: commands.Context):
         if (ctx.channel.name in self.last_seen_dict):
-            await ctx.send(f'@{ctx.author.name}, в последний раз {ctx.channel.name} видели в чате {self.last_seen_dict[ctx.channel.name]} CoolStoryBob');
+            await ctx.send(f'@{ctx.author.name}, в последний раз {ctx.channel.name} видели в чате {self.last_seen_dict[ctx.channel.name].strftime("%d.%m.%Y в %H:%M:%S")} CoolStoryBob');
         else:
             await ctx.send(f'@{ctx.author.name}, я не помню когда в последний раз видел в чате {ctx.channel.name} PoroSad');
+    
+    @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.member)
+    @commands.command(name='followage', aliases=['сколько'])
+    async def followage(self, ctx: commands.Context):
+        if ctx.author.name == ctx.channel.name:
+            await ctx.send(f'@{ctx.author.name}, невозможно блин узнать когда ты подписался на свой канал Jebaited')
+            return
+        user = await ctx.author.user()
+        channel = await ctx.channel.user()
+        follow = await user.fetch_follow(channel)
+        follow_age = follow.followed_at
+        if follow_age:
+            await ctx.send(f'@{ctx.author.name}, ты подписан на канал {ctx.channel.name} c {follow_age.strftime("%d.%m.%Y %H:%M:%S")} SeemsGood')
+        else:
+            await ctx.send(f'@{ctx.author.name}, ты не подписан на канал {ctx.channel.name} D:')
         
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
