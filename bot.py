@@ -106,10 +106,10 @@ class Bot(commands.Bot):
     @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.member)
     @commands.command(name='followage', aliases=['сколько'])
     async def followage(self, ctx: commands.Context):
-        if ctx.author.name == ctx.channel.name:
-            await ctx.send(f'@{ctx.author.name}, невозможно блин узнать когда ты подписался на свой канал Jebaited')
-            return
         user = await ctx.author.user()
+        if ctx.author.name == ctx.channel.name:
+            await ctx.send(f'@{ctx.author.name}, ты подписан на канал с момента его создания {user.created_at.strftime("%d.%m.%Y %H:%M:%S")}, ты же его автор CoolStoryBob')
+            return
         channel = await ctx.channel.user()
         follow = await user.fetch_follow(channel)
         follow_age = follow.followed_at
