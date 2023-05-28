@@ -96,27 +96,28 @@ class Bot(commands.Bot):
         await ctx.send(f'@{ctx.author.name} Я бот и я ничего не умею 4Head')
     
     @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
-    @commands.command(name='lastseen', aliases=['где', 'когда', 'когдавидели'])
+    @commands.command(name='lastseen', aliases=['когдавидели'])
     async def last_seen(self, ctx: commands.Context):
         if (ctx.channel.name in self.last_seen_dict):
             await ctx.send(f'@{ctx.author.name}, в последний раз {ctx.channel.name} видели в чате {self.last_seen_dict[ctx.channel.name].strftime("%d.%m.%Y в %H:%M:%S")} CoolStoryBob');
         else:
             await ctx.send(f'@{ctx.author.name}, я не помню когда в последний раз видел в чате {ctx.channel.name} PoroSad');
     
-    @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.member)
-    @commands.command(name='followage', aliases=['сколько'])
+    @commands.cooldown(rate=1, per=300, bucket=commands.Bucket.member)
+    @commands.command(name='followage', aliases=['возрастотслеживания'])
     async def followage(self, ctx: commands.Context):
         user = await ctx.author.user()
         if ctx.author.name == ctx.channel.name:
-            await ctx.send(f'@{ctx.author.name}, ты подписан на канал с момента его создания {user.created_at.strftime("%d.%m.%Y %H:%M:%S")}, ты же его автор CoolStoryBob')
-            return
-        channel = await ctx.channel.user()
-        follow = await user.fetch_follow(channel)
-        follow_age = follow.followed_at
-        if follow_age:
-            await ctx.send(f'@{ctx.author.name}, ты подписан на канал {ctx.channel.name} c {follow_age.strftime("%d.%m.%Y %H:%M:%S")} SeemsGood')
+            follow_date = user.created_at
         else:
-            await ctx.send(f'@{ctx.author.name}, ты не подписан на канал {ctx.channel.name} D:')
+            channel = await ctx.channel.user()
+            follow = await user.fetch_follow(channel)
+            follow_date = follow.followed_at
+        if follow_date:
+            follow_age = datetime.datetime.now().replace(tzinfo=datetime.timezone.utc) - follow_date
+            await ctx.send(f'@{ctx.author.name}, ты отслеживаешь канал {ctx.channel.name} {follow_age.days} дней SeemsGood')
+        else:
+            await ctx.send(f'@{ctx.author.name}, ты не отслеживаешь канал {ctx.channel.name} D:')
         
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
