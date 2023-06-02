@@ -60,7 +60,7 @@ class Bot(commands.Bot):
         if(str(f'@{self.nick}') in str(message.content).lower()):
             await message.channel.send(f'@{message.author.name}, {random.choice(bot_messages)}')
             return
-            
+        
     #Информационные команды
     @commands.command(name='тг', aliases=['телеграм', 'телега', 'telegram', 'tg'])
     async def telegram(self, ctx: commands.Context):
@@ -118,6 +118,59 @@ class Bot(commands.Bot):
             await ctx.send(f'@{ctx.author.name}, ты отслеживаешь канал {ctx.channel.name} {follow_age.days} дней SeemsGood')
         else:
             await ctx.send(f'@{ctx.author.name}, ты не отслеживаешь канал {ctx.channel.name} D:')
+            
+    @commands.cooldown(rate=1, per=300, bucket=commands.Bucket.channel)
+    @commands.command(name='день')
+    async def whatdaytoday(self, ctx: commands.Context):
+        await ctx.send(f'@{ctx.author.name}, {GetTodayHoliday()}')
+    
+    #Команды под оффлайн чат 
+    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
+    @commands.command(name='чмок')
+    async def chmok(self, ctx: commands.Context):
+        if await self.is_stream_online(ctx.channel):
+            return
+        sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
+        if len(ctx.chatters) == 0:
+            await ctx.send('В этом чате некого чмокнуть PoroSad')
+        elif len(sArgs) == 1:
+            await ctx.send(f'@{ctx.author.name} чмокнул @{random.choice(tuple(ctx.chatters)).name} 😘')
+        else:
+            if not IsValidArgs(sArgs[1].rstrip(' ')):
+                await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
+            elif ctx.author.name in sArgs[1].lower():
+                await ctx.send(f'@{ctx.author.name} боюсь что это нереально? Давай лучше я 😘')
+            elif self.nick in sArgs[1].lower():
+                await ctx.send(f'@{ctx.author.name}, и тебе чмок 😘')
+            else:
+                await ctx.send(f'@{ctx.author.name} чмокнул {str(sArgs[1])} 😘')
+                
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
+    @commands.command(name='чмо')
+    async def chmo(self, ctx: commands.Context):
+        if await self.is_stream_online(ctx.channel):
+            return
+        sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
+        if len(ctx.chatters) == 0:
+            await ctx.send('В этом чате пусто PoroSad')
+        elif len(sArgs) == 1:
+            await ctx.send(f'@{ctx.author.name} назвал чмом @{random.choice(tuple(ctx.chatters)).name} 🤪')
+        else:
+            if not IsValidArgs(sArgs[1].rstrip(' ')):
+                await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
+            elif ctx.author.name in sArgs[1].lower():
+                await ctx.send(f'@{ctx.author.name} не надо так с собой Stare')
+            elif self.nick in sArgs[1].lower():
+                await ctx.send(f'@{ctx.author.name}, что я тебе плохого сделал? PoroSad')
+            else:
+                await ctx.send(f'@{ctx.author.name} назвал чмом {str(sArgs[1])} 🤪')
+                
+    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
+    @commands.command(name='анек', aliases=['кринж'])
+    async def anek(self, ctx: commands.Context):
+        if await self.is_stream_online(ctx.channel):
+            return
+        await ctx.send(GetRandAnek())
         
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
@@ -139,3 +192,11 @@ class Bot(commands.Bot):
             await channel.send(f'@{user.name}, привет стример! 😘')
             self.last_seen_dict[user.name] = datetime.datetime.now()
             print(f'{datetime.datetime.now()}: Стример в чате {user.name}')
+    
+    #Дополнительные функции        
+    async def is_stream_online(self, channel) -> bool:
+        chan_user = await channel.user()
+        streams = await self.fetch_streams([chan_user.id])
+        if len(streams) == 0:
+            return False
+        return True
