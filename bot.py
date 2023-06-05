@@ -1,6 +1,7 @@
 from bot_settings import *
 from some_data import *
 from twitchio.ext import commands
+from twitchio.ext import routines
 from twitchio.user import User
 from twitchio.channel import Channel
 
@@ -15,16 +16,20 @@ class Bot(commands.Bot):
 
     name = str()
     last_seen_dict = dict()
+    ogey_of_day = str()
     
     #Инициализация бота
     def __init__(self, name):
         self.name = name
         tmpfile = load_obj(self.name + '_last_seen_dict')
         if tmpfile: self.last_seen_dict = tmpfile
+        tmpfile = load_obj(self.name + '_ogey_of_day')
+        if tmpfile: self.ogey_of_day = tmpfile
         super().__init__(token=ACCESS_TOKEN, prefix=PREFIX, initial_channels=INITIAL_CHANNELS)
         
     def save_objects(self):
         save_obj(self.last_seen_dict, self.name + '_last_seen_dict')
+        save_obj(self.ogey_of_day, self.name + '_ogey_of_day')
 
     #Событие готовности бота
     async def event_ready(self):
@@ -123,6 +128,14 @@ class Bot(commands.Bot):
     @commands.command(name='день')
     async def whatdaytoday(self, ctx: commands.Context):
         await ctx.send(f'@{ctx.author.name}, {GetTodayHoliday()}')
+        
+    @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
+    @commands.command(name='ogeyofday')
+    async def ogey_of_day_command(self, ctx: commands.Context):
+        if self.ogey_of_day == "":
+            await ctx.send(f'@{ctx.author.name}, Ogey дня не определен PoroSad')
+        else:
+            await ctx.send(f'@{ctx.author.name}, Ogey дня сегодня {self.ogey_of_day}, можно только позавидовать этому чатеру EZ Clap')
     
     #Команды под оффлайн чат 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
@@ -145,25 +158,25 @@ class Bot(commands.Bot):
             else:
                 await ctx.send(f'@{ctx.author.name} чмокнул {str(sArgs[1])} 😘')
                 
-    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
-    @commands.command(name='чмо')
-    async def chmo(self, ctx: commands.Context):
+    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
+    @commands.command(name='лапочка')
+    async def lapochka(self, ctx: commands.Context):
         if await self.is_stream_online(ctx.channel):
             return
         sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
         if len(ctx.chatters) == 0:
             await ctx.send('В этом чате пусто PoroSad')
         elif len(sArgs) == 1:
-            await ctx.send(f'@{ctx.author.name} назвал чмом @{random.choice(tuple(ctx.chatters)).name} 🤪')
+            await ctx.send(f'@{ctx.author.name} назвал лапочкой @{random.choice(tuple(ctx.chatters)).name} <3')
         else:
             if not IsValidArgs(sArgs[1].rstrip(' ')):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
             elif ctx.author.name in sArgs[1].lower():
-                await ctx.send(f'@{ctx.author.name} не надо так с собой Stare')
+                await ctx.send(f'@{ctx.author.name} высокая самооценка это хорошо SeemsGood')
             elif self.nick in sArgs[1].lower():
-                await ctx.send(f'@{ctx.author.name}, что я тебе плохого сделал? PoroSad')
+                await ctx.send(f'@{ctx.author.name}, ой спасибо bleedPurple')
             else:
-                await ctx.send(f'@{ctx.author.name} назвал чмом {str(sArgs[1])} 🤪')
+                await ctx.send(f'@{ctx.author.name} назвал лапочкой {str(sArgs[1])} <3')
                 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
     @commands.command(name='анек', aliases=['кринж'])
@@ -171,6 +184,16 @@ class Bot(commands.Bot):
         if await self.is_stream_online(ctx.channel):
             return
         await ctx.send(GetRandAnek())
+        
+        
+    #Рутины
+    @routines.routine(time = datetime.datetime(year = 2023, month = 6, day = 5, hour = 8, minute = 00))
+    async def ogey_of_day_routine(self):
+        for ch in OgeyOfHourChannels:
+            channel = self.get_channel(ch)
+            ogeyUsername = random.choice(tuple(channel.chatters)).name
+            self.ogey_of_day = ogeyUsername
+            await channel.send(f'Ogey дня становится @{ogeyUsername}. Похлопаем ему EZ Clap')
         
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
@@ -192,6 +215,10 @@ class Bot(commands.Bot):
             await channel.send(f'@{user.name}, привет стример! 😘')
             self.last_seen_dict[user.name] = datetime.datetime.now()
             print(f'{datetime.datetime.now()}: Стример в чате {user.name}')
+        
+    async def event_ready(self):
+        #Старт рутин
+        self.ogey_of_day_routine.start()
     
     #Дополнительные функции        
     async def is_stream_online(self, channel) -> bool:

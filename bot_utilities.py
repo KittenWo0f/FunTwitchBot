@@ -28,6 +28,8 @@ def IsValidArgs(args) -> bool:
         return False
     if GetCharCnt(args, set(SPEC_SYMBOLS)) > 7:
         return False
+    if len(args) > 25 and not ' ' in args:
+        return False
     for arg in args.split():
         if CheckRegexRule(str(arg), REGEX_IS_URL_TEST):
             return False
