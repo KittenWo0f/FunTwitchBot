@@ -187,7 +187,7 @@ class Bot(commands.Bot):
         
         
     #Рутины
-    @routines.routine(time = datetime.datetime(year = 2023, month = 6, day = 5, hour = 8, minute = 00))
+    @routines.routine(time = datetime.datetime(year = 2023, month = 6, day = 5, hour = 19, minute = 30))
     async def ogey_of_day_routine(self):
         for ch in OgeyOfHourChannels:
             channel = self.get_channel(ch)
