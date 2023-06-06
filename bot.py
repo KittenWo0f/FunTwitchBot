@@ -191,9 +191,8 @@ class Bot(commands.Bot):
     async def ogey_of_day_routine(self):
         for ch in OgeyOfHourChannels:
             channel = self.get_channel(ch)
-            ogeyUsername = random.choice(tuple(channel.chatters)).name
-            self.ogey_of_day = ogeyUsername
-            await channel.send(f'Ogey дня становится @{ogeyUsername}. Похлопаем ему EZ Clap')
+            self.ogey_of_day = random.choice(tuple(channel.chatters)).name
+            await channel.send(f'Ogey дня становится @{self.ogey_of_day}. Похлопаем ему EZ Clap')
         
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
