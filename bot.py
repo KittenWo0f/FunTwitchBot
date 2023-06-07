@@ -16,7 +16,7 @@ class Bot(commands.Bot):
 
     name = str()
     last_seen_dict = dict()
-    ogey_of_day = str()
+    ogey_of_day_dict = dict()
     
     #Инициализация бота
     def __init__(self, name):
@@ -24,12 +24,12 @@ class Bot(commands.Bot):
         tmpfile = load_obj(self.name + '_last_seen_dict')
         if tmpfile: self.last_seen_dict = tmpfile
         tmpfile = load_obj(self.name + '_ogey_of_day')
-        if tmpfile: self.ogey_of_day = tmpfile
+        if tmpfile: self.ogey_of_day_dict = tmpfile
         super().__init__(token=ACCESS_TOKEN, prefix=PREFIX, initial_channels=INITIAL_CHANNELS)
         
     def save_objects(self):
         save_obj(self.last_seen_dict, self.name + '_last_seen_dict')
-        save_obj(self.ogey_of_day, self.name + '_ogey_of_day')
+        save_obj(self.ogey_of_day_dict, self.name + '_ogey_of_day')
 
     #Событие готовности бота
     async def event_ready(self):
@@ -132,10 +132,10 @@ class Bot(commands.Bot):
     @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
     @commands.command(name='ogeyofday')
     async def ogey_of_day_command(self, ctx: commands.Context):
-        if self.ogey_of_day == "":
-            await ctx.send(f'@{ctx.author.name}, Ogey дня не определен PoroSad')
+        if ctx.channel.name in self.ogey_of_day_dict:
+            await ctx.send(f'@{ctx.author.name}, Ogey дня сегодня {self.ogey_of_day_dict[ctx.channel.name]}, можно только позавидовать этому чатеру EZ Clap')
         else:
-            await ctx.send(f'@{ctx.author.name}, Ogey дня сегодня {self.ogey_of_day}, можно только позавидовать этому чатеру EZ Clap')
+            await ctx.send(f'@{ctx.author.name}, Ogey дня не определен PoroSad')
     
     #Команды под оффлайн чат 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
@@ -191,8 +191,8 @@ class Bot(commands.Bot):
     async def ogey_of_day_routine(self):
         for ch in OgeyOfHourChannels:
             channel = self.get_channel(ch)
-            self.ogey_of_day = random.choice(tuple(channel.chatters)).name
-            await channel.send(f'Ogey дня становится @{self.ogey_of_day}. Похлопаем ему EZ Clap')
+            self.ogey_of_day_dict[ch] = random.choice(tuple(channel.chatters)).name
+            await channel.send(f'Ogey дня становится @{self.ogey_of_day_dict[ch]}. Похлопаем ему EZ Clap')
         
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
