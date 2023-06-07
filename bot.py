@@ -132,6 +132,8 @@ class Bot(commands.Bot):
     @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
     @commands.command(name='ogeyofday')
     async def ogey_of_day_command(self, ctx: commands.Context):
+        if ctx.channel.name not in OgeyOfHourChannels:
+            return
         if ctx.channel.name in self.ogey_of_day_dict:
             await ctx.send(f'@{ctx.author.name}, Ogey дня сегодня {self.ogey_of_day_dict[ctx.channel.name]}, можно только позавидовать этому чатеру EZ Clap')
         else:
