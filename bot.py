@@ -54,7 +54,7 @@ class Bot(commands.Bot):
         #Приветствия и покатствия
         check_str = re.split(r',|!|;|\.|\?', message.content)[0]
         cust_com = custom_commands_with_tag.get(str(check_str.lower()))
-        if cust_com and message.channel.name in ALLOW_FLOOD:
+        if cust_com and message.channel.name:
             await message.channel.send(f'@{message.author.name}, {random.choice(cust_com)}')
             return
         
@@ -88,6 +88,12 @@ class Bot(commands.Bot):
     @commands.command(name='донат', aliases=['donat', 'пожертвование'])
     async def donat(self, ctx: commands.Context):
         msg = donats.get(ctx.channel.name)
+        if(not msg == None):
+            await ctx.send(msg)
+    
+    @commands.command(name='мем', aliases=['меме', 'meme'])
+    async def meme(self, ctx: commands.Context):
+        msg = memes.get(ctx.channel.name)
         if(not msg == None):
             await ctx.send(msg)
     
@@ -194,7 +200,7 @@ class Bot(commands.Bot):
         for ch in OgeyOfHourChannels:
             channel = self.get_channel(ch)
             self.ogey_of_day_dict[ch] = random.choice(tuple(channel.chatters)).name
-            await channel.send(f'Ogey дня становится @{self.ogey_of_day_dict[ch]}. Похлопаем ему EZ Clap')
+            await channel.send(f'Ogey дня обновился. Чтобы узнать кто им стал введите команду !ogeyofday 4Head')
         
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
