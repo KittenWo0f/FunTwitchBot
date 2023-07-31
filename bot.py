@@ -48,10 +48,15 @@ class Bot(commands.Bot):
             return
 
         #Приветствия и покатствия
+        lower_message = message.content.lower();
         check_str = re.split(r',|!|;|\.|\?', message.content)[0]
         cust_com = custom_commands_with_tag.get(str(check_str.lower()))
         if cust_com and message.channel.name:
             await message.channel.send(f'@{message.author.name}, {random.choice(cust_com)}')
+            return
+        
+        if 'двач' in lower_message:
+            await message.channel.send(f'@{message.author.name},  двачеры сосут большой и толстый (леденец) KappaPride')
             return
         
         if check_str in custom_copypast_cmd and message.channel.name in ALLOW_FLOOD:
@@ -198,6 +203,7 @@ class Bot(commands.Bot):
         if channel.name == user.name:
             await channel.send(f'@{user.name}, привет стример! 😘')
             self.last_seen_dict[user.name] = datetime.datetime.now()
+            self.save_objects()
             print(f'{datetime.datetime.now()}: Стример в чате {user.name}')
     
     #Дополнительные функции        
