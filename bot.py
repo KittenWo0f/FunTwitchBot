@@ -8,6 +8,7 @@ from twitchio.channel import Channel
 import datetime
 import random
 import re
+import requests
 from bot_utilities import *
 
 from gpiozero import CPUTemperature
@@ -117,16 +118,14 @@ class Bot(commands.Bot):
     
     @commands.cooldown(rate=1, per=300, bucket=commands.Bucket.member)
     @commands.command(name='followage', aliases=['возрастотслеживания'])
-    async def followage(self, ctx: commands.Context):
-        user = await ctx.author.user()
+    async def followage(self, ctx: commands.Context):    
         if ctx.author.name == ctx.channel.name:
-            follow_date = user.created_at
-        else:
-            channel = await ctx.channel.user()
-            follow = await user.fetch_follow(channel)
-            follow_date = follow.followed_at
-        if follow_date:
-            follow_age = datetime.datetime.now().replace(tzinfo=datetime.timezone.utc) - follow_date
+            await ctx.send(f'@{ctx.author.name}, ты не можешь отслеживать сам себя CoolStoryBob')
+            return
+        r = requests.get(f'https://api.ivr.fi/v2/twitch/subage/{ctx.author.name}/{ctx.channel.name}')
+        followedAt = r.json()["followedAt"]
+        if followedAt :
+            follow_age = datetime.datetime.now() - datetime.datetime.fromisoformat(followedAt.replace('Z',''))
             await ctx.send(f'@{ctx.author.name}, ты отслеживаешь канал {ctx.channel.name} {follow_age.days} дней SeemsGood')
         else:
             await ctx.send(f'@{ctx.author.name}, ты не отслеживаешь канал {ctx.channel.name} D:')
