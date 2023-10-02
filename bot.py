@@ -123,6 +123,9 @@ class Bot(commands.Bot):
             await ctx.send(f'@{ctx.author.name}, ты не можешь отслеживать сам себя CoolStoryBob')
             return
         r = requests.get(f'https://api.ivr.fi/v2/twitch/subage/{ctx.author.name}/{ctx.channel.name}')
+        if not r.ok:
+            await ctx.send(f'@{ctx.author.name}, не удалось выполнить запрос времени отслеживания PoroSad')
+            return
         followedAt = r.json()["followedAt"]
         if followedAt :
             follow_age = datetime.datetime.now() - datetime.datetime.fromisoformat(followedAt.replace('Z',''))
@@ -134,6 +137,19 @@ class Bot(commands.Bot):
     @commands.command(name='день')
     async def whatdaytoday(self, ctx: commands.Context):
         await ctx.send(f'@{ctx.author.name}, {GetTodayHoliday()}')
+        
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
+    @commands.command(name='погода', aliases=['weather'])
+    async def weather(self, ctx: commands.Context):
+        url = "https://weatherapi-com.p.rapidapi.com/current.json"
+        arg = ctx.message.content.rstrip(' ').split(' ', 1)[1]
+        querystring = {"q":arg,"lang":"ru"}
+        response = requests.get(url, headers=weather_headers, params=querystring)
+        if (response.ok):
+            jsonR = response.json()
+            await ctx.send(f'@{ctx.author.name}, в {jsonR["location"]["name"]} на данный момент {jsonR["current"]["temp_c"]}°C. {jsonR["current"]["condition"]["text"]} peepoPls')
+        else:
+            await ctx.send(f'@{ctx.author.name}, не удалось выполнить запрос погоды PoroSad')
         
     #Команды под оффлайн чат 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
