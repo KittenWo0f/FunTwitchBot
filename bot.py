@@ -1,14 +1,13 @@
 from bot_settings import *
 from some_data import *
 from twitchio.ext import commands
-from twitchio.ext import routines
 from twitchio.user import User
 from twitchio.channel import Channel
 
 import datetime
 import random
 import re
-import requests
+import http3
 from bot_utilities import *
 
 from gpiozero import CPUTemperature
@@ -122,8 +121,9 @@ class Bot(commands.Bot):
         if ctx.author.name == ctx.channel.name:
             await ctx.send(f'@{ctx.author.name}, ты не можешь отслеживать сам себя CoolStoryBob')
             return
-        r = requests.get(f'https://api.ivr.fi/v2/twitch/subage/{ctx.author.name}/{ctx.channel.name}')
-        if not r.ok:
+        client = http3.AsyncClient()
+        r = await client.get(f'https://api.ivr.fi/v2/twitch/subage/{ctx.author.name}/{ctx.channel.name}')
+        if r.status_code >= 400:
             await ctx.send(f'@{ctx.author.name}, не удалось выполнить запрос времени отслеживания PoroSad')
             return
         followedAt = r.json()["followedAt"]
@@ -144,8 +144,9 @@ class Bot(commands.Bot):
         url = "https://weatherapi-com.p.rapidapi.com/current.json"
         arg = ctx.message.content.rstrip(' ').split(' ', 1)[1]
         querystring = {"q":arg,"lang":"ru"}
-        response = requests.get(url, headers=weather_headers, params=querystring)
-        if (response.ok):
+        client = http3.AsyncClient()
+        response = await client.get(url, headers=weather_headers, params=querystring)
+        if response.status_code < 400:
             jsonR = response.json()
             await ctx.send(f'@{ctx.author.name}, в {jsonR["location"]["name"]} на данный момент {jsonR["current"]["temp_c"]}°C. {jsonR["current"]["condition"]["text"]} peepoPls')
         else:
