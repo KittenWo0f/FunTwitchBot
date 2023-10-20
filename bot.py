@@ -209,8 +209,8 @@ class Bot(commands.Bot):
 
     #Обработка исключений
     async def event_command_error(self, ctx, error: Exception) -> None:
-        #if isinstance(error, commands.CommandOnCooldown):
-        #    await ctx.send(f'Команда "{error.command.name}" заряжается, еще {int(error.retry_after)} сек.') 
+        if isinstance(error, commands.CommandOnCooldown) and not await self.is_stream_online(ctx.channel):
+            await ctx.send(f'Команда "{error.command.name}" заряжается, еще {int(error.retry_after)} сек.') 
         print(error)
     
     #Событие подключения к чату
