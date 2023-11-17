@@ -3,8 +3,10 @@ from some_data import *
 from twitchio.ext import commands
 from twitchio.user import User
 from twitchio.channel import Channel
+from db_client import DbMessageLogClient
 
 import datetime
+from dateutil import tz
 import random
 import re
 import http3
@@ -16,6 +18,7 @@ class Bot(commands.Bot):
 
     name = str()
     last_seen_dict = dict()
+    dbLogClient = DbMessageLogClient()
     
     #Инициализация бота
     def __init__(self, name):
@@ -23,6 +26,7 @@ class Bot(commands.Bot):
         tmpfile = load_obj(self.name + '_last_seen_dict')
         if tmpfile: self.last_seen_dict = tmpfile
         super().__init__(token=ACCESS_TOKEN, prefix=PREFIX, initial_channels=INITIAL_CHANNELS)
+        self.dbLogClient.Connect(DB_CONNECTION_STRING)
         
     def save_objects(self):
         save_obj(self.last_seen_dict, self.name + '_last_seen_dict')
@@ -36,7 +40,12 @@ class Bot(commands.Bot):
     async def event_message(self, message):
         if message.echo:
             return
-        print(f'{message.timestamp}({message.channel.name}){message.author.name}:{message.content}')
+        utcTime = message.timestamp
+        utcTime = utcTime.replace(tzinfo=tz.tzutc())
+        localTime = utcTime.astimezone(tz.tzlocal())
+        print(f'{localTime}({message.channel.name}){message.author.id}:{message.content}')
+        channelUser = await message.channel.user(False)
+        self.dbLogClient.InsertMessage(message.content, message.author, channelUser, localTime)
         
         if str(message.content).startswith(PREFIX):
             await self.handle_commands(message)
