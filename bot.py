@@ -37,15 +37,23 @@ class Bot(commands.Bot):
         print(f'Id пользователя | {self.user_id}')
 
     #Обработка сообщений
-    async def event_message(self, message):
+    async def event_message(self, message):        
         if message.echo:
-            return
+            author_id = self.user_id 
+            author_name = self.nick
+        else:
+            author_id = message.author.id 
+            author_name = message.author.name
+       
         utcTime = message.timestamp
         utcTime = utcTime.replace(tzinfo=tz.tzutc())
         localTime = utcTime.astimezone(tz.tzlocal())
-        print(f'{localTime}({message.channel.name}){message.author.id}:{message.content}')
+        print(f'{localTime}({message.channel.name}){author_name}:{message.content}')
         channelUser = await message.channel.user(False)
-        self.dbLogClient.InsertMessage(message.content, message.author, channelUser, localTime)
+        self.dbLogClient.InsertMessage(message.content, author_id, author_name, channelUser, localTime)
+        
+        if message.echo:
+            return
         
         if str(message.content).startswith(PREFIX):
             await self.handle_commands(message)
