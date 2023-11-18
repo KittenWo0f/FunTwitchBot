@@ -18,7 +18,7 @@ class Bot(commands.Bot):
 
     name = str()
     last_seen_dict = dict()
-    dbLogClient = DbMessageLogClient()
+    dbLogClient = DbMessageLogClient(DB_CONNECTION_STRING)
     
     #Инициализация бота
     def __init__(self, name):
@@ -26,7 +26,7 @@ class Bot(commands.Bot):
         tmpfile = load_obj(self.name + '_last_seen_dict')
         if tmpfile: self.last_seen_dict = tmpfile
         super().__init__(token=ACCESS_TOKEN, prefix=PREFIX, initial_channels=INITIAL_CHANNELS)
-        self.dbLogClient.Connect(DB_CONNECTION_STRING)
+        self.dbLogClient.Connect()
         
     def save_objects(self):
         save_obj(self.last_seen_dict, self.name + '_last_seen_dict')
