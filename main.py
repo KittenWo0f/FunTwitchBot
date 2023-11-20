@@ -1,7 +1,6 @@
 from bot import Bot
+import time
+import os
 
 bot = Bot('twitch_bot')
-try:
-    bot.run()
-finally:
-    bot.save_objects()
+bot.run()

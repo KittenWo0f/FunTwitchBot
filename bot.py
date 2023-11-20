@@ -17,19 +17,12 @@ from gpiozero import CPUTemperature
 class Bot(commands.Bot):
 
     name = str()
-    last_seen_dict = dict()
     dbLogClient = DbMessageLogClient(DB_CONNECTION_STRING)
     
     #Инициализация бота
     def __init__(self, name):
-        self.name = name
-        tmpfile = load_obj(self.name + '_last_seen_dict')
-        if tmpfile: self.last_seen_dict = tmpfile
         super().__init__(token=ACCESS_TOKEN, prefix=PREFIX, initial_channels=INITIAL_CHANNELS)
         self.dbLogClient.Connect()
-        
-    def save_objects(self):
-        save_obj(self.last_seen_dict, self.name + '_last_seen_dict')
 
     #Событие готовности бота
     async def event_ready(self):
@@ -127,8 +120,10 @@ class Bot(commands.Bot):
     @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
     @commands.command(name='lastseen', aliases=['когдавидели'])
     async def last_seen(self, ctx: commands.Context):
-        if (ctx.channel.name in self.last_seen_dict):
-            await ctx.send(f'@{ctx.author.name}, в последний раз {ctx.channel.name} видели в чате {self.last_seen_dict[ctx.channel.name].strftime("%d.%m.%Y в %H:%M:%S")} CoolStoryBob');
+        channel_user = await ctx.channel.user()
+        last_activity = self.dbLogClient.GetUserLastActivity(channel_user.id)
+        if (last_activity):
+            await ctx.send(f'@{ctx.author.name}, в последний раз {ctx.channel.name} видели в чате {last_activity.strftime("%d.%m.%Y в %H:%M:%S")} CoolStoryBob');
         else:
             await ctx.send(f'@{ctx.author.name}, я не помню когда в последний раз видел в чате {ctx.channel.name} PoroSad');
     
@@ -234,10 +229,10 @@ class Bot(commands.Bot):
     async def event_join(self, channel: Channel, user: User):
         print(f'{datetime.datetime.now()}: Пользователь {user.name} вошел в чат {channel.name}')
         if channel.name == user.name:
-            await channel.send(f'@{user.name}, привет стример! 😘')
-            self.last_seen_dict[user.name] = datetime.datetime.now()
-            self.save_objects()
-            print(f'{datetime.datetime.now()}: Стример в чате {user.name}')
+            channel_user = await channel.user() #id отсутвует в User поэтому приходится запрашивать
+            await channel.send(f'@{channel_user.name}, привет стример! 😘')
+            self.dbLogClient.UpdateUserLastActivity(channel_user.id, channel_user.name, datetime.datetime.now())
+            print(f'{datetime.datetime.now()}: Стример в чате {channel_user.name}')
     
     #Дополнительные функции        
     async def is_stream_online(self, channel) -> bool:
