@@ -60,9 +60,11 @@ class Bot(commands.Bot):
         #Приветствия и покатствия
         lower_message = message.content.lower();
         check_str = re.split(r',|!|;|\.|\?', message.content)[0]
-        cust_com = custom_commands_with_tag.get(str(check_str.lower()))
-        if cust_com and message.channel.name:
-            await message.channel.send(f'@{message.author.name}, {random.choice(cust_com)}')
+        if check_str in hellos:
+            await message.channel.send(f'@{message.author.name}, {random.choice(hellos)}')
+            return
+        if check_str in byes:
+            await message.channel.send(f'@{message.author.name}, {random.choice(byes)}')
             return
         
         if 'двач' in lower_message:
