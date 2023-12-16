@@ -217,6 +217,22 @@ class Bot(commands.Bot):
     async def auf(self, ctx: commands.Context):
         await ctx.send(random.choice(auf_messages))
         
+    @commands.cooldown(rate=1, per=7200, bucket=commands.Bucket.channel)
+    @commands.command(name='привет', aliases=['hello', 'hi'])
+    async def hello(self, ctx: commands.Context):
+        if await self.is_stream_online(ctx.channel):
+            return
+        channel_user = await ctx.channel.user()
+        active_users = self.dbLogClient.GetLastActiveUsers(channel_user.id)
+        if not active_users:
+            await ctx.send('Я не знаю кто был в чате недавно. Поэтому привет всем KonCha')
+            return
+        msg = f'Привет'
+        for user_row in active_users:
+            msg = f' {msg} @{user_row[0]}'
+        msg = msg + ' KonCha'
+        await ctx.send(msg)
+        
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
     async def temperature(self, ctx: commands.Context):

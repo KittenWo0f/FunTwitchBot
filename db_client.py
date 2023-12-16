@@ -57,6 +57,28 @@ class DbMessageLogClient():
         except Exception as e:
             print(f'Failed get user last activity in db: {e}.')
             return None
+        
+    def GetLastActiveUsers(self, chanel_id):
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        SELECT u.name
+                        FROM messages AS m
+                        JOIN users AS u ON u.id=m.author_id
+                        WHERE m.timestamp >= date_trunc('second', now()) - INTERVAL '43200 second'
+                        AND m.timestamp < (date_trunc('second', now()))
+                        AND m.channel_id = '%s'
+                        GROUP BY u.id
+                        ORDER BY MAX(m.timestamp) DESC
+                        LIMIT 20
+                        """,
+                        [chanel_id])
+            res = cur.fetchall()
+            if res:
+                return res
+        except Exception as e:
+            print(f'Failed check last active users in db: {e}.')
+            return None
     
     def _CheckUserExist(self, id, name):
         try:
