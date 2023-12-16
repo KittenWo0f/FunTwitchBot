@@ -169,43 +169,41 @@ class Bot(commands.Bot):
     #Команды под оффлайн чат 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='чмок')
-    async def chmok(self, ctx: commands.Context):
+    async def chmok(self, ctx: commands.Context, phrase: str):
         if await self.is_stream_online(ctx.channel):
             return
-        sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
         if len(ctx.chatters) == 0:
             await ctx.send('В этом чате некого чмокнуть PoroSad')
-        elif len(sArgs) == 1:
+        elif not phrase:
             await ctx.send(f'@{ctx.author.name} чмокнул @{random.choice(tuple(ctx.chatters)).name} 😘')
         else:
-            if not IsValidArgs(sArgs[1].rstrip(' ')):
+            if not IsValidArgs(phrase):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
-            elif ctx.author.name in sArgs[1].lower():
-                await ctx.send(f'@{ctx.author.name} боюсь что это нереально? Давай лучше я 😘')
-            elif self.nick in sArgs[1].lower():
+            elif ctx.author.name in phrase.lower():
+                await ctx.send(f'@{ctx.author.name} боюсь что это нереально. Давай лучше я 😘')
+            elif self.nick in phrase.lower():
                 await ctx.send(f'@{ctx.author.name}, и тебе чмок 😘')
             else:
-                await ctx.send(f'@{ctx.author.name} чмокнул {str(sArgs[1])} 😘')
+                await ctx.send(f'@{ctx.author.name} чмокнул {phrase} 😘')
                 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='лапочка')
-    async def lapochka(self, ctx: commands.Context):
+    async def lapochka(self, ctx: commands.Context, phrase: str):
         if await self.is_stream_online(ctx.channel):
             return
-        sArgs = ctx.message.content.rstrip(' ').split(' ', 1)
         if len(ctx.chatters) == 0:
             await ctx.send('В этом чате пусто PoroSad')
-        elif len(sArgs) == 1:
+        elif not phrase:
             await ctx.send(f'@{ctx.author.name} назвал лапочкой @{random.choice(tuple(ctx.chatters)).name} <3')
         else:
-            if not IsValidArgs(sArgs[1].rstrip(' ')):
+            if not IsValidArgs(phrase):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
-            elif ctx.author.name in sArgs[1].lower():
+            elif ctx.author.name in phrase.lower():
                 await ctx.send(f'@{ctx.author.name} высокая самооценка это хорошо SeemsGood')
-            elif self.nick in sArgs[1].lower():
+            elif self.nick in phrase.lower():
                 await ctx.send(f'@{ctx.author.name}, ой спасибо bleedPurple')
             else:
-                await ctx.send(f'@{ctx.author.name} назвал лапочкой {str(sArgs[1])} <3')
+                await ctx.send(f'@{ctx.author.name} назвал лапочкой {phrase} <3')
                 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
     @commands.command(name='анек', aliases=['кринж'])
