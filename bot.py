@@ -214,6 +214,11 @@ class Bot(commands.Bot):
             return
         await ctx.send(GetRandAnek())
         
+    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.user)
+    @commands.command(name='ауф', aliases=['auf'])
+    async def auf(self, ctx: commands.Context):
+        await ctx.send(random.choice(auf_messages))
+        
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
     async def temperature(self, ctx: commands.Context):
