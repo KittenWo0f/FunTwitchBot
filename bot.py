@@ -169,7 +169,7 @@ class Bot(commands.Bot):
     #Команды под оффлайн чат 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='чмок')
-    async def chmok(self, ctx: commands.Context, phrase: str):
+    async def chmok(self, ctx: commands.Context, phrase: str | None):
         if await self.is_stream_online(ctx.channel):
             return
         if len(ctx.chatters) == 0:
@@ -188,7 +188,7 @@ class Bot(commands.Bot):
                 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='лапочка')
-    async def lapochka(self, ctx: commands.Context, phrase: str):
+    async def lapochka(self, ctx: commands.Context, phrase: str | None):
         if await self.is_stream_online(ctx.channel):
             return
         if len(ctx.chatters) == 0:
@@ -227,9 +227,9 @@ class Bot(commands.Bot):
         if not active_users:
             await ctx.send('Я не знаю кто был в чате недавно. Поэтому привет всем KonCha')
             return
-        msg = f'Привет'
+        msg = f'Привет,'
         for user_row in active_users:
-            msg = f' {msg} @{user_row[0]}'
+            msg = f' {msg} @{user_row[0]},'
         msg = msg + ' KonCha'
         await ctx.send(msg)
         
