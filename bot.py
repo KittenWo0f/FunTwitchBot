@@ -9,7 +9,7 @@ import datetime
 from dateutil import tz
 import random
 import re
-import http3
+import requests
 from bot_utilities import *
 
 from gpiozero import CPUTemperature
@@ -135,8 +135,7 @@ class Bot(commands.Bot):
         if ctx.author.name == ctx.channel.name:
             await ctx.send(f'@{ctx.author.name}, ты не можешь отслеживать сам себя CoolStoryBob')
             return
-        client = http3.AsyncClient()
-        r = await client.get(f'https://api.ivr.fi/v2/twitch/subage/{ctx.author.name}/{ctx.channel.name}')
+        r = requests.get(f'https://api.ivr.fi/v2/twitch/subage/{ctx.author.name}/{ctx.channel.name}')
         if r.status_code >= 400:
             await ctx.send(f'@{ctx.author.name}, не удалось выполнить запрос времени отслеживания PoroSad')
             return
@@ -158,13 +157,12 @@ class Bot(commands.Bot):
         url = "https://weatherapi-com.p.rapidapi.com/current.json"
         arg = ctx.message.content.rstrip(' ').split(' ', 1)[1]
         querystring = {"q":arg,"lang":"ru"}
-        client = http3.AsyncClient()
-        response = await client.get(url, headers=weather_headers, params=querystring)
+        response = requests.get(url, headers=weather_headers, params=querystring)
         if response.status_code < 400:
             jsonR = response.json()
-            await ctx.send(f'@{ctx.author.name}, в {jsonR["location"]["name"]} на данный момент {jsonR["current"]["temp_c"]}°C. {jsonR["current"]["condition"]["text"]} peepoPls')
+            await ctx.send(f'@{ctx.author.name}, в {jsonR["location"]["name"]} на данный момент {jsonR["current"]["temp_c"]}°C. {jsonR["current"]["condition"]["text"]} santaPls')
         else:
-            await ctx.send(f'@{ctx.author.name}, не удалось выполнить запрос погоды PoroSad')
+            await ctx.send(f'@{ctx.author.name}, не удалось выполнить запрос погоды santaPls')
         
     #Команды под оффлайн чат 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
