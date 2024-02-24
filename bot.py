@@ -131,7 +131,7 @@ class Bot(commands.Bot):
     
     @commands.cooldown(rate=1, per=300, bucket=commands.Bucket.member)
     @commands.command(name='followage', aliases=['возрастотслеживания'])
-    async def followage(self, ctx: commands.Context):    
+    async def followage(self, ctx: commands.Context):
         if ctx.author.name == ctx.channel.name:
             await ctx.send(f'@{ctx.author.name}, ты не можешь отслеживать сам себя CoolStoryBob')
             return
@@ -146,43 +146,43 @@ class Bot(commands.Bot):
         else:
             await ctx.send(f'@{ctx.author.name}, ты не отслеживаешь канал {ctx.channel.name} D:')
             
-    @commands.cooldown(rate=1, per=300, bucket=commands.Bucket.channel)
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
     @commands.command(name='день')
     async def whatdaytoday(self, ctx: commands.Context):
         await ctx.send(f'@{ctx.author.name}, {GetTodayHoliday()}')
         
-    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
-    @commands.command(name='погода', aliases=['weather'])
-    async def weather(self, ctx: commands.Context):
-        url = "https://weatherapi-com.p.rapidapi.com/current.json"
-        arg = ctx.message.content.rstrip(' ').split(' ', 1)[1]
-        querystring = {"q":arg,"lang":"ru"}
-        response = requests.get(url, headers=weather_headers, params=querystring)
-        if response.status_code < 400:
-            jsonR = response.json()
-            await ctx.send(f'@{ctx.author.name}, в {jsonR["location"]["name"]} на данный момент {jsonR["current"]["temp_c"]}°C. {jsonR["current"]["condition"]["text"]} santaPls')
-        else:
-            await ctx.send(f'@{ctx.author.name}, не удалось выполнить запрос погоды santaPls')
+@commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
+@commands.command(name='погода', aliases=['weather'])
+async def weather(self, ctx: commands.Context):
+    url = "https://weatherapi-com.p.rapidapi.com/current.json"
+    arg = ctx.message.content.rstrip(' ').split(' ', 1)[1]
+    querystring = {"q":arg,"lang":"ru"}
+    response = requests.get(url, headers=weather_headers, params=querystring)
+    if response.status_code < 400:
+        jsonR = response.json()
+        await ctx.send(f'@{ctx.author.name}, в {jsonR["location"]["name"]} на данный момент {jsonR["current"]["temp_c"]}°C. {jsonR["current"]["condition"]["text"]} peepoPls')
+    else:
+        await ctx.send(f'@{ctx.author.name}, не удалось выполнить запрос погоды PoroSad')
         
     #Команды под оффлайн чат 
-    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
-    @commands.command(name='чмок')
-    async def chmok(self, ctx: commands.Context, phrase: str | None):
-        if await self.is_stream_online(ctx.channel):
-            return
-        if len(ctx.chatters) == 0:
-            await ctx.send('В этом чате некого чмокнуть PoroSad')
-        elif not phrase:
-            await ctx.send(f'@{ctx.author.name} чмокнул @{random.choice(tuple(ctx.chatters)).name} 😘')
+@commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
+@commands.command(name='чмок')
+async def chmok(self, ctx: commands.Context, phrase: str | None):
+    if await self.is_stream_online(ctx.channel):
+        return
+    if len(ctx.chatters) == 0:
+        await ctx.send('В этом чате некого чмокнуть PoroSad')
+    elif not phrase:
+        await ctx.send(f'@{ctx.author.name} чмокнул @{random.choice(tuple(ctx.chatters)).name} 😘')
+    else:
+        if not IsValidArgs(phrase):
+            await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
+        elif ctx.author.name in phrase.lower():
+            await ctx.send(f'@{ctx.author.name} боюсь что это нереально. Давай лучше я 😘')
+        elif self.nick in phrase.lower():
+            await ctx.send(f'@{ctx.author.name}, и тебе чмок 😘')
         else:
-            if not IsValidArgs(phrase):
-                await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
-            elif ctx.author.name in phrase.lower():
-                await ctx.send(f'@{ctx.author.name} боюсь что это нереально. Давай лучше я 😘')
-            elif self.nick in phrase.lower():
-                await ctx.send(f'@{ctx.author.name}, и тебе чмок 😘')
-            else:
-                await ctx.send(f'@{ctx.author.name} чмокнул {phrase} 😘')
+            await ctx.send(f'@{ctx.author.name} чмокнул {phrase} 😘')
                 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='лапочка')
@@ -230,7 +230,7 @@ class Bot(commands.Bot):
             msg = f' {msg} @{user_row[0]},'
         msg = msg + ' KonCha'
         await ctx.send(msg)
-        
+       
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
     async def temperature(self, ctx: commands.Context):
