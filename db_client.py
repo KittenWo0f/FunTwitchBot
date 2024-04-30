@@ -80,6 +80,44 @@ class DbMessageLogClient():
             print(f'Failed check last active users in db: {e}.')
             return None
     
+    def GetRandomMessageByUser(self, user_id):
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        SELECT message FROM public.messages AS m
+                        WHERE author_id='%s'
+                        ORDER BY random()
+                        LIMIT 1
+                        """,
+                        [user_id])
+            res = cur.fetchall()
+            if res:
+                return res[0][0]
+        except Exception as e:
+            print(f'Failed check last active users in db: {e}.')
+            return None
+        
+    def GetTopOfMonthUsers(self, user_id):
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        SELECT ua.name, COUNT(*) FROM messages AS m
+                        JOIN users AS ua ON ua.id = m.author_id
+                        WHERE  m.timestamp >= date_trunc('month', now()) - interval '1 day'
+                        AND    m.timestamp <  date_trunc('day'  , now()) + interval '1 day'
+                        AND	   m.channel_id = '%s'
+                        GROUP BY ua.id
+                        ORDER BY COUNT(m.author_id) DESC
+                        LIMIT 15
+                        """,
+                        [user_id])
+            res = cur.fetchall()
+            if res:
+                return res
+        except Exception as e:
+            print(f'Failed get top of month users in db: {e}.')
+            return None
+    
     def _CheckUserExist(self, id, name):
         try:
             #Добавляю пользователя если его нет в таблицу пользователей

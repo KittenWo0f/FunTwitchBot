@@ -6,6 +6,7 @@ from twitchio.channel import Channel
 from db_client import DbMessageLogClient
 
 import datetime
+import calendar
 from dateutil import tz
 import random
 import re
@@ -37,7 +38,7 @@ class Bot(commands.Bot):
         else:
             author_id = message.author.id 
             author_name = message.author.name
-       
+        
         utcTime = message.timestamp
         utcTime = utcTime.replace(tzinfo=tz.tzutc())
         localTime = utcTime.astimezone(tz.tzlocal())
@@ -76,7 +77,9 @@ class Bot(commands.Bot):
             return
             
         if(str(f'@{self.nick}') in str(message.content).lower()):
-            await message.channel.send(f'@{message.author.name}, {random.choice(bot_messages)}')
+            channel_user = await message.channel.user()
+            await message.channel.send(f'@{message.author.name}, {self.dbLogClient.GetRandomMessageByUser(channel_user.id)}')
+            #await message.channel.send(f'@{message.author.name}, {self.dbLogClient.GetRandomMessageByUser(40348923)}')
             return
         
     #Информационные команды
@@ -230,6 +233,28 @@ class Bot(commands.Bot):
             msg = f' {msg} @{user_row[0]},'
         msg = msg + ' KonCha'
         await ctx.send(msg)
+        
+    @commands.cooldown(rate=1, per=600, bucket=commands.Bucket.channel)
+    @commands.command(name='топ', aliases=['top'])
+    async def top(self, ctx: commands.Context):
+        channel_user = await ctx.channel.user()
+        top_users = self.dbLogClient.GetTopOfMonthUsers(channel_user.id)
+        if not top_users:
+            await ctx.send('Не найдены сообщения для топа NotLikeThis.')
+            return
+        msg = f'Топ месяца по сообщениям:'
+        for user_row in top_users:
+            msg = f' {msg} {user_row[0]}({user_row[1]}),'
+        msg = msg + ' PogChamp'
+        await ctx.send(msg)
+        
+    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
+    @commands.command(name='год', aliases=['year', 'прогресс'])
+    async def year(self, ctx: commands.Context):
+        now = datetime.datetime.now()
+        start_of_year = now.replace(day=1, month=1, year=now.year)
+        days_passed = (now - start_of_year).days
+        await ctx.send(f"@{ctx.author.name}, прогресс года: {days_passed / (365 + calendar.isleap(datetime.datetime.now().year)) * 100:.2f}% catDespair")
        
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
