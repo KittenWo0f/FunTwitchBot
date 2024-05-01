@@ -103,7 +103,7 @@ class DbMessageLogClient():
             cur.execute("""
                         SELECT ua.name, COUNT(*) FROM messages AS m
                         JOIN users AS ua ON ua.id = m.author_id
-                        WHERE  m.timestamp >= date_trunc('month', now()) - interval '1 day'
+                        WHERE  m.timestamp >= date_trunc('month', now())
                         AND    m.timestamp <  date_trunc('day'  , now()) + interval '1 day'
                         AND	   m.channel_id = '%s'
                         GROUP BY ua.id
