@@ -255,18 +255,15 @@ class Bot(commands.Bot):
         if await self.is_stream_online(ctx.channel):
             return
         channel_user = await ctx.channel.user()
-        if not phrase:
-            msg_count = self.dbLogClient.GetUsersMessageCountForMounthById(channel_user.id, ctx.author.id)
-            if not msg_count:
-                await ctx.send(f'@{ctx.author.name}, не удалось подсчитать твои сообщения NotLikeThis.')
-                return
-            await ctx.send(f"@{ctx.author.name}, в этом месяце ты написал в чате {msg_count} {decl_of_num(msg_count, self.msg_titles)} PogChamp")
+        if phrase:
+            name = phrase
         else:
-            msg_count = self.dbLogClient.GetUsersMessageCountForMounthByName(channel_user.id, phrase.lower())
-            if not msg_count:
-                await ctx.send(f'@{ctx.author.name}, не удалось подсчитать сообщения запрошеного пользователя NotLikeThis.')
-                return
-            await ctx.send(f"@{ctx.author.name}, в этом месяце {phrase} написал в чате {msg_count} {decl_of_num(msg_count, self.msg_titles)} PogChamp")
+            name = ctx.author.name
+        msg_count = self.dbLogClient.GetUsersMessageCountForMounthByName(channel_user.id, name)
+        if not msg_count:
+            await ctx.send(f'@{ctx.author.name}, не удалось подсчитать сообщения запрошеного пользователя NotLikeThis.')
+            return
+        await ctx.send(f"В этом месяце {name} написал в чате {msg_count} {decl_of_num(msg_count, self.msg_titles)} PogChamp")
         
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
     @commands.command(name='год', aliases=['year', 'прогресс'])
