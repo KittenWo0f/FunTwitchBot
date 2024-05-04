@@ -97,7 +97,7 @@ class DbMessageLogClient():
             print(f'Failed check last active users in db: {e}.')
             return None
         
-    def GetTopOfMonthUsers(self, user_id):
+    def GetTopOfMonthUsers(self, channel_id):
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -110,12 +110,50 @@ class DbMessageLogClient():
                         ORDER BY COUNT(m.author_id) DESC
                         LIMIT 15
                         """,
-                        [user_id])
+                        [channel_id])
             res = cur.fetchall()
             if res:
                 return res
         except Exception as e:
             print(f'Failed get top of month users in db: {e}.')
+            return None
+        
+    def GetUsersMessageCountForMounthById(self, channel_id, user_id):
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        SELECT COUNT(*) FROM messages AS m
+                        JOIN users AS ua ON ua.id = m.author_id
+                        WHERE  m.timestamp >= date_trunc('month', now())
+                        AND    m.timestamp <  date_trunc('day'  , now()) + interval '1 day'
+                        AND	   m.channel_id = %s
+                        AND    ua.id = %s
+                        """,
+                        (channel_id, user_id))
+            res = cur.fetchall()
+            if res:
+                return res[0][0]
+        except Exception as e:
+            print(f'Failed get message count of month for user {user_id} in db: {e}.')
+            return None
+        
+    def GetUsersMessageCountForMounthByName(self, channel_id, user_name):
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        SELECT COUNT(*) FROM messages AS m
+                        JOIN users AS ua ON ua.id = m.author_id
+                        WHERE  m.timestamp >= date_trunc('month', now())
+                        AND    m.timestamp <  date_trunc('day'  , now()) + interval '1 day'
+                        AND	   m.channel_id = %s
+                        AND    ua.name = %s
+                        """,
+                        (channel_id, user_name))
+            res = cur.fetchall()
+            if res:
+                return res[0][0]
+        except Exception as e:
+            print(f'Failed get message count of month for user {user_name} in db: {e}.')
             return None
     
     def _CheckUserExist(self, id, name):

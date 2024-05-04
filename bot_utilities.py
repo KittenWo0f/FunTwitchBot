@@ -80,3 +80,10 @@ def load_obj(name):
             return pickle.load(f)
     except (OSError, IOError) as e:
         return None
+def decl_of_num(n, titles):
+    if n%10==1 and n%100!=11:
+        return titles[0]
+    elif n%10>=2 and n%10<=4 and (n%100<10 or n%100>=20):
+        return titles[1]
+    else:
+        return titles[2]
