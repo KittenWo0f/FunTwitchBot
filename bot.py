@@ -286,7 +286,7 @@ class Bot(commands.Bot):
         await ctx.send(f"@{ctx.author.name}, прогресс года: {days_passed / (365 + calendar.isleap(datetime.datetime.now().year)) * 100:.2f}% catDespair")
                
     #Рутины
-    @routines.routine(time = datetime.datetime(year = 2024, month = 6, day = 1, hour = 00, minute = 01))
+    @routines.routine(time = datetime.datetime(year = 2024, month = 6, day = 1, hour = 00, minute = 1))
     async def ogey_of_day_routine(self):
         for ch in OGEY_OF_DAY_CHANNELS:
             channels = await self.fetch_users([ch])
