@@ -40,7 +40,7 @@ def IsValidArgs(args) -> bool:
 def GetRandAnek() -> str:
     # url = f'https://anekdotbar.ru/korotkie/page/{random.randrange(1,33)}/'
     #TODO Спарсить всё на диск и брать оттуда
-    url = f'https://anekdotbar.ru/pro-shtirlica/page/{random.randrange(1,8)}/' 
+    url = f'https://anekdotbar.ru/page/{random.randrange(1,756)}/' 
     req = requests.get(url)
     soup = BeautifulSoup(req.text, "html.parser")
     aneksHTML = soup.find_all('div', class_ = 'tecst')

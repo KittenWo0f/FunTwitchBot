@@ -245,7 +245,7 @@ class Bot(commands.Bot):
             return
         msg = f'Топ месяца по сообщениям:'
         for user_row in top_users:
-            msg = f' {msg} {user_row[0]}({user_row[1]}),'
+            msg = f' {msg} {user_row[0]}({user_row[1]:,}),'
         msg = msg + ' PogChamp'
         await ctx.send(msg)
         
@@ -259,11 +259,11 @@ class Bot(commands.Bot):
             name = phrase
         else:
             name = ctx.author.name
-        msg_count = self.dbLogClient.GetUsersMessageCountForMounthByName(channel_user.id, name)
+        msg_count = self.dbLogClient.GetUsersMessageCountForMounthByName(channel_user.id, name.lower())
         if not msg_count:
             await ctx.send(f'@{ctx.author.name}, не удалось подсчитать сообщения запрошеного пользователя NotLikeThis.')
             return
-        await ctx.send(f"В этом месяце {name} написал в чате {msg_count} {decl_of_num(msg_count, self.msg_titles)} PogChamp")
+        await ctx.send(f"В этом месяце {name} написал в чате {msg_count:,} {decl_of_num(msg_count, self.msg_titles)} PogChamp")
         
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
     @commands.command(name='год', aliases=['year', 'прогресс'])
