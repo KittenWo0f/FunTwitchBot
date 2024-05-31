@@ -97,6 +97,58 @@ class DbMessageLogClient():
             print(f'Failed check last active users in db: {e}.')
             return None
         
+    def GetRandomUserByLastNHours(self, channel_id, hours):
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        SELECT author_id FROM public.messages
+                        WHERE timestamp BETWEEN now() - interval '%s hours' AND now()
+                                AND channel_id = '%s'
+                        GROUP BY author_id
+                        ORDER BY random()
+                        LIMIT 1
+                        """,
+                        (hours, channel_id))
+            res = cur.fetchall()
+            if res:
+                return res[0][0]
+        except Exception as e:
+            print(f'Failed GetRandomUserByLastNHours in db: {e}.')
+            return None
+        
+    def UpdateOgey(self, channel_id, ogey_id):
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        INSERT INTO ogeyofday (channel_id, ogey_id, timestamp) 
+                        VALUES (%s, %s, now())
+                        ON CONFLICT (channel_id) DO UPDATE 
+                        SET ogey_id = %s,
+                            timestamp = now();
+                        """,
+                        (channel_id, ogey_id, ogey_id))
+            self._conn.commit()
+        except Exception as e:
+            print(f'Failed UpdateOgey in db: {e}.')
+            return False
+        return True
+        
+    def GetOgey(self, channel_id):
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        SELECT u.name FROM ogeyofday AS o
+                        JOIN users AS u ON u.id = o.ogey_id
+                        WHERE o.channel_id = '%s'
+                        """,
+                        [channel_id])
+            res = cur.fetchall()
+            if res:
+                return res[0][0]
+        except Exception as e:
+            print(f'Failed GetOgey in db: {e}.')
+            return None
+        
     def GetTopOfMonthUsers(self, channel_id):
         try:
             cur = self._conn.cursor()

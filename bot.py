@@ -1,6 +1,6 @@
 from bot_settings import *
 from some_data import *
-from twitchio.ext import commands
+from twitchio.ext import commands, routines
 from twitchio.user import User
 from twitchio.channel import Channel
 from db_client import DbMessageLogClient
@@ -167,6 +167,18 @@ class Bot(commands.Bot):
             await ctx.send(f'@{ctx.author.name}, в {jsonR["location"]["name"]} на данный момент {jsonR["current"]["temp_c"]}°C. {jsonR["current"]["condition"]["text"]} peepoPls')
         else:
             await ctx.send(f'@{ctx.author.name}, не удалось выполнить запрос погоды PoroSad')
+            
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
+    @commands.command(name='ogeyofday')
+    async def ogeyofday(self, ctx: commands.Context):
+        if ctx.channel.name not in OGEY_OF_DAY_CHANNELS:
+            return
+        channel_user = await ctx.channel.user()
+        ogey_name = self.dbLogClient.GetOgey(channel_user.id)
+        if ogey_name != None:
+            await ctx.send(f'@{ctx.author.name}, Ogey дня сегодня {ogey_name}, можно только позавидовать этому чатеру EZ Clap')
+        else:
+            await ctx.send(f'@{ctx.author.name}, Ogey дня не определен PoroSad')
         
     #Команды под оффлайн чат 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
@@ -272,7 +284,22 @@ class Bot(commands.Bot):
         start_of_year = now.replace(day=1, month=1, year=now.year)
         days_passed = (now - start_of_year).days
         await ctx.send(f"@{ctx.author.name}, прогресс года: {days_passed / (365 + calendar.isleap(datetime.datetime.now().year)) * 100:.2f}% catDespair")
-       
+               
+    #Рутины
+    @routines.routine(time = datetime.datetime(year = 2024, month = 6, day = 1, hour = 00, minute = 01))
+    async def ogey_of_day_routine(self):
+        for ch in OGEY_OF_DAY_CHANNELS:
+            channels = await self.fetch_users([ch])
+            channel_id = channels[0].id
+            channel = self.get_channel(ch)
+            ogey_id = self.dbLogClient.GetRandomUserByLastNHours(channel_id, 24)
+            if not ogey_id:
+                ogey_id = random.choice(tuple(ctx.channel.chatters)).name
+            if self.dbLogClient.UpdateOgey(channel_id, ogey_id):
+                await channel.send(f'Ogey дня обновился. Чтобы узнать кто им стал введите команду !ogeyofday 4Head')
+            else:
+                await channel.send(f'Не удалось определить нового Ogey. PoroSad')
+        
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
     async def temperature(self, ctx: commands.Context):
