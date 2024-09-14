@@ -87,3 +87,9 @@ def decl_of_num(n, titles):
         return titles[1]
     else:
         return titles[2]
+
+def replace_chars(s, chars_map):
+    res = str()
+    for char in s:
+        res += chars_map[char]
+    return res

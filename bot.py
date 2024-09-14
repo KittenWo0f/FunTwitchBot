@@ -44,8 +44,8 @@ class Bot(commands.Bot):
         utcTime = utcTime.replace(tzinfo=tz.tzutc())
         localTime = utcTime.astimezone(tz.tzlocal())
         print(f'{localTime}({message.channel.name}){author_name}:{message.content}')
-        channelUser = await message.channel.user(False)
-        self.dbLogClient.InsertMessage(message.content, author_id, author_name, channelUser, localTime)
+        channel_user = await message.channel.user(False)
+        self.dbLogClient.InsertMessage(message.content, author_id, author_name, channel_user, localTime)
         
         if message.echo:
             return
@@ -69,9 +69,6 @@ class Bot(commands.Bot):
             await message.channel.send(f'@{message.author.name}, {random.choice(byes)}')
             return
         
-        if 'двач' in lower_message:
-            await message.channel.send(f'@{message.author.name},  двачеры сосут большой и толстый (леденец) KappaPride')
-            return
         
         if check_str in custom_copypast_cmd and message.channel.name in ALLOW_FLOOD:
             await message.channel.send(check_str)
@@ -127,7 +124,7 @@ class Bot(commands.Bot):
     @commands.command(name='lastseen', aliases=['когдавидели'])
     async def last_seen(self, ctx: commands.Context):
         channel_user = await ctx.channel.user()
-        last_activity = self.dbLogClient.GetUserLastActivity(channel_user.id)
+        last_activity = self.dbLogClient.GetChannelAuthorLastActivity(channel_user.id)
         if (last_activity):
             await ctx.send(f'@{ctx.author.name}, в последний раз {ctx.channel.name} видели в чате {last_activity.strftime("%d.%m.%Y в %H:%M:%S")} CoolStoryBob');
         else:
@@ -154,17 +151,23 @@ class Bot(commands.Bot):
     @commands.command(name='день')
     async def whatdaytoday(self, ctx: commands.Context):
         await ctx.send(f'@{ctx.author.name}, {GetTodayHoliday()}')
-        
+      
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='погода', aliases=['weather'])
     async def weather(self, ctx: commands.Context):
+        direct_translate = {
+            'N' : 'С',
+            'W' : 'З',
+            'S' : 'Ю',
+            'E' : 'В'
+        }
         url = "https://weatherapi-com.p.rapidapi.com/current.json"
         arg = ctx.message.content.rstrip(' ').split(' ', 1)[1]
         querystring = {"q":arg,"lang":"ru"}
         response = requests.get(url, headers=weather_headers, params=querystring)
         if response.status_code < 400:
             jsonR = response.json()
-            await ctx.send(f'@{ctx.author.name}, в {jsonR["location"]["name"]} на данный момент {jsonR["current"]["temp_c"]}°C. {jsonR["current"]["condition"]["text"]} peepoPls')
+            await ctx.send(f'@{ctx.author.name}, в {jsonR["location"]["name"]} на данный момент {jsonR["current"]["temp_c"]}°C. {jsonR["current"]["condition"]["text"]}. Ветер {replace_chars(jsonR["current"]["wind_dir"], direct_translate)} {jsonR["current"]["wind_kph"] * 1000 / 3600:.2f} м/с. peepoPls')
         else:
             await ctx.send(f'@{ctx.author.name}, не удалось выполнить запрос погоды PoroSad')
             
@@ -219,11 +222,9 @@ class Bot(commands.Bot):
             else:
                 await ctx.send(f'@{ctx.author.name} назвал лапочкой {phrase} <3')
                 
-    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
+    @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
     @commands.command(name='анек', aliases=['кринж'])
     async def anek(self, ctx: commands.Context):
-        if await self.is_stream_online(ctx.channel):
-            return
         await ctx.send(GetRandAnek())
         
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.user)
@@ -277,6 +278,26 @@ class Bot(commands.Bot):
             return
         await ctx.send(f"В этом месяце {name} написал в чате {msg_count:,} {decl_of_num(msg_count, self.msg_titles)} PogChamp")
         
+    @commands.cooldown(rate=1, per=300, bucket=commands.Bucket.channel)
+    @commands.command(name='всегонасрано')
+    async def vsegonasrano(self, ctx: commands.Context):
+        channel_user = await ctx.channel.user()
+        msg_count = self.dbLogClient.GetAllUsersMessageCountForMounth(channel_user.id)
+        if not msg_count:
+            await ctx.send(f'@{ctx.author.name}, не удалось подсчитать количество написаных сообщений NotLikeThis')
+            return
+        await ctx.send(f"В этом месяце в чате насрали {msg_count:,} сообщений SHTO")
+        
+    @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
+    @commands.command(name='маления')
+    async def malenia(self, ctx: commands.Context):
+        channel_user = await ctx.channel.user()
+        msg_count = self.dbLogClient.GetMaleniaInChannel(channel_user.id)
+        if not msg_count:
+            await ctx.send(f'@{ctx.author.name}, не удалось подсчитать упоминаний малений в этом чате NotLikeThis')
+            return
+        await ctx.send(f"В этом чате вспомнили Малению {msg_count:,} раз MaleniaTime")
+        
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
     @commands.command(name='год', aliases=['year', 'прогресс'])
     async def year(self, ctx: commands.Context):
@@ -286,15 +307,13 @@ class Bot(commands.Bot):
         await ctx.send(f"@{ctx.author.name}, прогресс года: {days_passed / (365 + calendar.isleap(datetime.datetime.now().year)) * 100:.2f}% catDespair")
                
     #Рутины
-    @routines.routine(time = datetime.datetime(year = 2024, month = 6, day = 1, hour = 00, minute = 1))
+    @routines.routine(time = datetime.datetime(year = 2024, month = 6, day = 1, hour = 18, minute = 00))
     async def ogey_of_day_routine(self):
         for ch in OGEY_OF_DAY_CHANNELS:
             channels = await self.fetch_users([ch])
             channel_id = channels[0].id
             channel = self.get_channel(ch)
             ogey_id = self.dbLogClient.GetRandomUserByLastNHours(channel_id, 24)
-            if not ogey_id:
-                ogey_id = random.choice(tuple(ctx.channel.chatters)).name
             if self.dbLogClient.UpdateOgey(channel_id, ogey_id):
                 await channel.send(f'Ogey дня обновился. Чтобы узнать кто им стал введите команду !ogeyofday 4Head')
             else:
@@ -318,10 +337,13 @@ class Bot(commands.Bot):
         print(f'{datetime.datetime.now()}: Пользователь {user.name} вошел в чат {channel.name}')
         if channel.name == user.name:
             channel_user = await channel.user() #id отсутвует в User поэтому приходится запрашивать
-            await channel.send(f'@{channel_user.name}, привет стример! 😘')
-            self.dbLogClient.UpdateUserLastActivity(channel_user.id, channel_user.name, datetime.datetime.now())
+            await channel.send(f'Привет, мир! KonCha')
             print(f'{datetime.datetime.now()}: Стример в чате {channel_user.name}')
-    
+            
+    async def event_ready(self):
+        #Старт рутин
+        self.ogey_of_day_routine.start()
+        
     #Дополнительные функции        
     async def is_stream_online(self, channel) -> bool:
         chan_user = await channel.user()

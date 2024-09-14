@@ -27,28 +27,18 @@ class DbMessageLogClient():
             self._conn.commit()
         except Exception as e:
             print(f'Failed insert to db: {e}.')
-            
-    def UpdateUserLastActivity(self, id, name, timestamp):
-        self._CheckConnection()
-        self._CheckUserExist(id, name)
-        try:
-            self._conn.cursor().execute("""
-            INSERT INTO users_activities (user_id, last_seen) 
-            VALUES (%s, %s)
-            ON CONFLICT (user_id) DO UPDATE 
-            SET last_seen = excluded.last_seen;
-            """, (id, timestamp))
-            self._conn.commit() 
-        except Exception as e:
-            print(f'Failed update user last activity in db: {e}.')
     
-    def GetUserLastActivity(self, id):
+    def GetChannelAuthorLastActivity(self, id):
         self._CheckConnection()
         try:
             cur = self._conn.cursor()
             cur.execute(""" 
-            SELECT last_seen FROM users_activities WHERE user_id=%s
-            """, [id])
+            SELECT timestamp FROM messages 
+            WHERE author_id = %s AND
+                channel_id = %s
+            ORDER BY timestamp DESC
+            LIMIT 1;
+            """, (id, id))
             res = cur.fetchall()
             if res:
                 return res[0][0]
@@ -187,6 +177,44 @@ class DbMessageLogClient():
                 return res[0][0]
         except Exception as e:
             print(f'Failed get message count of month for user {user_name} in db: {e}.')
+            return None
+        
+    def GetAllUsersMessageCountForMounth(self, channel_id):
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        SELECT COUNT(*) FROM messages AS m
+                        JOIN users AS ua ON ua.id = m.author_id
+                        WHERE  m.timestamp >= date_trunc('month', now())
+                        AND    m.timestamp <  date_trunc('day'  , now()) + interval '1 day'
+                        AND	   m.channel_id = %s
+                        """,
+                        [channel_id])
+            res = cur.fetchall()
+            if res:
+                return res[0][0]
+        except Exception as e:
+            print(f'Failed get message count of month for channel {channel_id} in db: {e}.')
+            return None
+        
+    def GetMaleniaInChannel(self, channel_id):
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        SELECT COUNT(*) FROM messages AS m
+                        WHERE m.channel_id = '%s'
+                        AND (m.message ILIKE '%%мален%%' OR 
+                            m.message ILIKE '%%маслени%%' OR 
+                            m.message ILIKE '%%мелани%%' OR
+                            m.message ILIKE '%%милани%%'
+                            )
+                        """,
+                        [channel_id])
+            res = cur.fetchall()
+            if res:
+                return res[0][0]
+        except Exception as e:
+            print(f'Failed GetMaleniaInChannel {channel_id} in db: {e}.')
             return None
     
     def _CheckUserExist(self, id, name):
