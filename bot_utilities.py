@@ -93,3 +93,9 @@ def replace_chars(s, chars_map):
     for char in s:
         res += chars_map[char]
     return res
+
+def get_val_by_max_val(dictionary, val):
+    for k, v in dictionary.items():
+        if val <= k:
+            return v
+    return None

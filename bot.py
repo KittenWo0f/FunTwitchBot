@@ -304,7 +304,20 @@ class Bot(commands.Bot):
         now = datetime.datetime.now()
         start_of_year = now.replace(day=1, month=1, year=now.year)
         days_passed = (now - start_of_year).days
-        await ctx.send(f"@{ctx.author.name}, прогресс года: {days_passed / (365 + calendar.isleap(datetime.datetime.now().year)) * 100:.2f}% catDespair")
+        seconds_since_midnight = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+        await ctx.send(f"@{ctx.author.name}, прогресс года: {(days_passed * 86400 + seconds_since_midnight) / ((365 + calendar.isleap(datetime.datetime.now().year)) * 86400) * 100:.10f}% catDespair")
+        
+    @commands.cooldown(rate=1, per=600, bucket=commands.Bucket.user)
+    @commands.command(name='сосиска')
+    async def sousage(self, ctx: commands.Context):
+        length = random.randint(0, 30)
+        emote = get_val_by_max_val({5: "PoroSad", 
+                                    10: "Stare",
+                                    15: "Hmm",
+                                    20: "Hmmege",
+                                    25: "SHTO",
+                                    30: "EZ"}, length)
+        await ctx.send(f"@{ctx.author.name} имеет сосиску {length} см. {emote}")
                
     #Рутины
     @routines.routine(time = datetime.datetime(year = 2024, month = 6, day = 1, hour = 18, minute = 00))
