@@ -3,7 +3,7 @@ from some_data import *
 from twitchio.ext import commands, routines
 from twitchio.user import User
 from twitchio.channel import Channel
-from db_client import DbMessageLogClient
+from db_client import db_message_log_client
 
 import datetime
 import calendar
@@ -15,16 +15,16 @@ from bot_utilities import *
 
 from gpiozero import CPUTemperature
 
-class Bot(commands.Bot):
+class twitch_bot(commands.Bot):
 
     name = str()
-    dbLogClient = DbMessageLogClient(DB_CONNECTION_STRING)
+    dbLogClient = db_message_log_client(DB_CONNECTION_STRING)
     msg_titles = ['сообщение', 'сообщения', 'сообщений']
     
     #Инициализация бота
     def __init__(self, name):
         super().__init__(token=ACCESS_TOKEN, prefix=PREFIX, initial_channels=INITIAL_CHANNELS)
-        self.dbLogClient.Connect()
+        self.dbLogClient.connect()
 
     #Событие готовности бота
     async def event_ready(self):
@@ -40,12 +40,12 @@ class Bot(commands.Bot):
             author_id = message.author.id 
             author_name = message.author.name
         
-        utcTime = message.timestamp
-        utcTime = utcTime.replace(tzinfo=tz.tzutc())
-        localTime = utcTime.astimezone(tz.tzlocal())
+        utc_time = message.timestamp
+        utc_time = utc_time.replace(tzinfo=tz.tzutc())
+        localTime = utc_time.astimezone(tz.tzlocal())
         print(f'{localTime}({message.channel.name}){author_name}:{message.content}')
         channel_user = await message.channel.user(False)
-        self.dbLogClient.InsertMessage(message.content, author_id, author_name, channel_user, localTime)
+        self.dbLogClient.insert_message(message.content, author_id, author_name, channel_user, localTime)
         
         if message.echo:
             return
@@ -60,7 +60,6 @@ class Bot(commands.Bot):
             return
 
         #Приветствия и покатствия
-        lower_message = message.content.lower();
         check_str = re.split(r',|!|;|\.|\?', message.content)[0]
         if check_str in hellos:
             await message.channel.send(f'@{message.author.name}, {random.choice(hellos)}')
@@ -76,7 +75,7 @@ class Bot(commands.Bot):
             
         if(str(f'@{self.nick}') in str(message.content).lower()):
             channel_user = await message.channel.user()
-            await message.channel.send(f'@{message.author.name}, {self.dbLogClient.GetRandomMessageByUser(channel_user.id)}')
+            await message.channel.send(f'@{message.author.name}, {self.dbLogClient.get_random_message_by_user(channel_user.id)}')
             #await message.channel.send(f'@{message.author.name}, {self.dbLogClient.GetRandomMessageByUser(40348923)}')
             return
         
@@ -124,7 +123,7 @@ class Bot(commands.Bot):
     @commands.command(name='lastseen', aliases=['когдавидели'])
     async def last_seen(self, ctx: commands.Context):
         channel_user = await ctx.channel.user()
-        last_activity = self.dbLogClient.GetChannelAuthorLastActivity(channel_user.id)
+        last_activity = self.dbLogClient.get_channel_author_last_activity(channel_user.id)
         if (last_activity):
             await ctx.send(f'@{ctx.author.name}, в последний раз {ctx.channel.name} видели в чате {last_activity.strftime("%d.%m.%Y в %H:%M:%S")} CoolStoryBob');
         else:
@@ -150,7 +149,7 @@ class Bot(commands.Bot):
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
     @commands.command(name='день')
     async def whatdaytoday(self, ctx: commands.Context):
-        await ctx.send(f'@{ctx.author.name}, {GetTodayHoliday()}')
+        await ctx.send(f'@{ctx.author.name}, {get_today_holiday()}')
       
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='погода', aliases=['weather'])
@@ -177,7 +176,7 @@ class Bot(commands.Bot):
         if ctx.channel.name not in OGEY_OF_DAY_CHANNELS:
             return
         channel_user = await ctx.channel.user()
-        ogey_name = self.dbLogClient.GetOgey(channel_user.id)
+        ogey_name = self.dbLogClient.get_ogey(channel_user.id)
         if ogey_name != None:
             await ctx.send(f'@{ctx.author.name}, Ogey дня сегодня {ogey_name}, можно только позавидовать этому чатеру EZ Clap')
         else:
@@ -194,7 +193,7 @@ class Bot(commands.Bot):
         elif not phrase:
             await ctx.send(f'@{ctx.author.name} чмокнул @{random.choice(tuple(ctx.chatters)).name} 😘')
         else:
-            if not IsValidArgs(phrase):
+            if not is_valid_args(phrase):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
             elif ctx.author.name in phrase.lower():
                 await ctx.send(f'@{ctx.author.name} боюсь что это нереально. Давай лучше я 😘')
@@ -213,7 +212,7 @@ class Bot(commands.Bot):
         elif not phrase:
             await ctx.send(f'@{ctx.author.name} назвал лапочкой @{random.choice(tuple(ctx.chatters)).name} <3')
         else:
-            if not IsValidArgs(phrase):
+            if not is_valid_args(phrase):
                 await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
             elif ctx.author.name in phrase.lower():
                 await ctx.send(f'@{ctx.author.name} высокая самооценка это хорошо SeemsGood')
@@ -225,7 +224,7 @@ class Bot(commands.Bot):
     @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
     @commands.command(name='анек', aliases=['кринж'])
     async def anek(self, ctx: commands.Context):
-        await ctx.send(GetRandAnek())
+        await ctx.send(get_rand_anek())
         
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.user)
     @commands.command(name='ауф', aliases=['auf'])
@@ -238,7 +237,7 @@ class Bot(commands.Bot):
         if await self.is_stream_online(ctx.channel):
             return
         channel_user = await ctx.channel.user()
-        active_users = self.dbLogClient.GetLastActiveUsers(channel_user.id)
+        active_users = self.dbLogClient.get_last_active_users(channel_user.id)
         if not active_users:
             await ctx.send('Я не знаю кто был в чате недавно. Поэтому привет всем KonCha')
             return
@@ -252,7 +251,7 @@ class Bot(commands.Bot):
     @commands.command(name='топ', aliases=['top'])
     async def top(self, ctx: commands.Context):
         channel_user = await ctx.channel.user()
-        top_users = self.dbLogClient.GetTopOfMonthUsers(channel_user.id)
+        top_users = self.dbLogClient.get_top_of_month_users(channel_user.id)
         if not top_users:
             await ctx.send('Не найдены сообщения для топа NotLikeThis')
             return
@@ -272,7 +271,7 @@ class Bot(commands.Bot):
             name = phrase
         else:
             name = ctx.author.name
-        msg_count = self.dbLogClient.GetUsersMessageCountForMounthByName(channel_user.id, name.lower())
+        msg_count = self.dbLogClient.get_users_message_count_for_mounth_by_name(channel_user.id, name.lower())
         if not msg_count:
             await ctx.send(f'@{ctx.author.name}, не удалось подсчитать сообщения запрошеного пользователя NotLikeThis.')
             return
@@ -282,7 +281,7 @@ class Bot(commands.Bot):
     @commands.command(name='всегонасрано')
     async def vsegonasrano(self, ctx: commands.Context):
         channel_user = await ctx.channel.user()
-        msg_count = self.dbLogClient.GetAllUsersMessageCountForMounth(channel_user.id)
+        msg_count = self.dbLogClient.get_all_users_message_count_for_mounth(channel_user.id)
         if not msg_count:
             await ctx.send(f'@{ctx.author.name}, не удалось подсчитать количество написаных сообщений NotLikeThis')
             return
@@ -292,7 +291,7 @@ class Bot(commands.Bot):
     @commands.command(name='маления')
     async def malenia(self, ctx: commands.Context):
         channel_user = await ctx.channel.user()
-        msg_count = self.dbLogClient.GetMaleniaInChannel(channel_user.id)
+        msg_count = self.dbLogClient.get_malenia_in_channel(channel_user.id)
         if not msg_count:
             await ctx.send(f'@{ctx.author.name}, не удалось подсчитать упоминаний малений в этом чате NotLikeThis')
             return
@@ -326,8 +325,8 @@ class Bot(commands.Bot):
             channels = await self.fetch_users([ch])
             channel_id = channels[0].id
             channel = self.get_channel(ch)
-            ogey_id = self.dbLogClient.GetRandomUserByLastNHours(channel_id, 24)
-            if self.dbLogClient.UpdateOgey(channel_id, ogey_id):
+            ogey_id = self.dbLogClient.get_random_user_by_last_n_hours(channel_id, 24)
+            if self.dbLogClient.update_ogey(channel_id, ogey_id):
                 await channel.send(f'Ogey дня обновился. Чтобы узнать кто им стал введите команду !ogeyofday 4Head')
             else:
                 await channel.send(f'Не удалось определить нового Ogey. PoroSad')
@@ -336,8 +335,8 @@ class Bot(commands.Bot):
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
     async def temperature(self, ctx: commands.Context):
         if ctx.author.name in white_list:
-            cpuT = CPUTemperature()
-            await ctx.send(f'Моя горячесть равна {cpuT.temperature} градусам')
+            cpu_t = CPUTemperature()
+            await ctx.send(f'Моя горячесть равна {cpu_t.temperature} градусам')
 
     #Обработка исключений
     async def event_command_error(self, ctx, error: Exception) -> None:

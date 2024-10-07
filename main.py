@@ -1,6 +1,4 @@
-from bot import Bot
-import time
-import os
+from bot import twitch_bot
 
-bot = Bot('twitch_bot')
+bot = twitch_bot('twitch_bot')
 bot.run()

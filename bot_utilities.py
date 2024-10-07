@@ -10,34 +10,34 @@ from collections import Counter
 #Для сохранения объектов
 import pickle
 
-def GetRandomEmotion() -> str:
+def get_random_emotion() -> str:
     emotions = ['GunRun', 'GlitchCat', 'FallHalp', 'FallWinning', 'BrokeBack', 'BloodTrail', 'CaitlynS', 'CarlSmile']
     emotion = randChoise(emotions)
     return emotion
 
-def CheckRegexRule(val, rule):
+def check_regex_rule(val, rule):
     import re
     regex = re.compile(rule, re.IGNORECASE)
     res = re.search(regex, val)
     return res is not None
 
-def IsValidArgs(args) -> bool:
-    if CheckRegexRule(str(args).replace(" ",""), REGEX_IS_URL_TEST):
+def is_valid_args(args) -> bool:
+    if check_regex_rule(str(args).replace(" ",""), REGEX_IS_URL_TEST):
         return False
-    if not CheckRegexRule(str(args), REGEX_SPEC_SYMB_RULE_TEST):
+    if not check_regex_rule(str(args), REGEX_SPEC_SYMB_RULE_TEST):
         return False
-    if GetCharCnt(args, set(SPEC_SYMBOLS)) > 7:
+    if get_char_cnt(args, set(SPEC_SYMBOLS)) > 7:
         return False
     if len(args) > 25 and not ' ' in args:
         return False
     for arg in args.split():
-        if CheckRegexRule(str(arg), REGEX_IS_URL_TEST):
+        if check_regex_rule(str(arg), REGEX_IS_URL_TEST):
             return False
-        if not CheckRegexRule(str(arg), REGEX_SPEC_SYMB_RULE_TEST):
+        if not check_regex_rule(str(arg), REGEX_SPEC_SYMB_RULE_TEST):
             return False
     return True
 
-def GetRandAnek() -> str:
+def get_rand_anek() -> str:
     # url = f'https://anekdotbar.ru/korotkie/page/{random.randrange(1,33)}/'
     #TODO Спарсить всё на диск и брать оттуда
     url = f'https://anekdotbar.ru/page/{random.randrange(1,756)}/' 
@@ -53,7 +53,7 @@ def GetRandAnek() -> str:
             break
     return fullAnek
 
-def GetTodayHoliday() -> str:
+def get_today_holiday() -> str:
     url = f'https://kakoysegodnyaprazdnik.ru//'
     header = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
@@ -63,7 +63,7 @@ def GetTodayHoliday() -> str:
     holiHTML = random.choice(soup.find_all('span', itemprop='text')).find_all(text = True, recursive=False)[0]
     return str(holiHTML)
 
-def GetCharCnt(string, symbols) -> int:
+def get_char_cnt(string, symbols) -> int:
     cnt = 0
     counter = Counter(string)
     for char in symbols:

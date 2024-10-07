@@ -1,7 +1,7 @@
 import psycopg2
 import psycopg2.extensions
 
-class DbMessageLogClient():
+class db_message_log_client():
         
     def __init__(self, connstr):
         self._conn = None
@@ -9,7 +9,7 @@ class DbMessageLogClient():
     def __del__(self):
         self._conn.close()
     
-    def Connect(self) -> bool:
+    def connect(self) -> bool:
         try:
             self._conn = psycopg2.connect(self._connstr)
         except Exception as e:
@@ -17,10 +17,10 @@ class DbMessageLogClient():
             return False
         return True
         
-    def InsertMessage(self, message, author_id, author_name, channel, timestamp):
-        self._CheckConnection()
-        self._CheckUserExist(channel.id, channel.name)
-        self._CheckUserExist(author_id, author_name)
+    def insert_message(self, message, author_id, author_name, channel, timestamp):
+        self._check_connection()
+        self._check_user_exist(channel.id, channel.name)
+        self._check_user_exist(author_id, author_name)
         try:
             #Добавляю сообщение в таблицу сообщений
             self._conn.cursor().execute("INSERT INTO messages (timestamp, channel_id, author_id, message) VALUES (%s, %s, %s, %s)", (timestamp, channel.id, author_id, message))
@@ -28,8 +28,8 @@ class DbMessageLogClient():
         except Exception as e:
             print(f'Failed insert to db: {e}.')
     
-    def GetChannelAuthorLastActivity(self, id):
-        self._CheckConnection()
+    def get_channel_author_last_activity(self, id):
+        self._check_connection()
         try:
             cur = self._conn.cursor()
             cur.execute(""" 
@@ -48,7 +48,7 @@ class DbMessageLogClient():
             print(f'Failed get user last activity in db: {e}.')
             return None
         
-    def GetLastActiveUsers(self, chanel_id):
+    def get_last_active_users(self, chanel_id):
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -70,7 +70,7 @@ class DbMessageLogClient():
             print(f'Failed check last active users in db: {e}.')
             return None
     
-    def GetRandomMessageByUser(self, user_id):
+    def get_random_message_by_user(self, user_id):
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -87,7 +87,7 @@ class DbMessageLogClient():
             print(f'Failed check last active users in db: {e}.')
             return None
         
-    def GetRandomUserByLastNHours(self, channel_id, hours):
+    def get_random_user_by_last_n_hours(self, channel_id, hours):
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -106,7 +106,7 @@ class DbMessageLogClient():
             print(f'Failed GetRandomUserByLastNHours in db: {e}.')
             return None
         
-    def UpdateOgey(self, channel_id, ogey_id):
+    def update_ogey(self, channel_id, ogey_id):
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -123,7 +123,7 @@ class DbMessageLogClient():
             return False
         return True
         
-    def GetOgey(self, channel_id):
+    def get_ogey(self, channel_id):
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -139,7 +139,7 @@ class DbMessageLogClient():
             print(f'Failed GetOgey in db: {e}.')
             return None
         
-    def GetTopOfMonthUsers(self, channel_id):
+    def get_top_of_month_users(self, channel_id):
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -160,7 +160,7 @@ class DbMessageLogClient():
             print(f'Failed get top of month users in db: {e}.')
             return None
         
-    def GetUsersMessageCountForMounthByName(self, channel_id, user_name):
+    def get_users_message_count_for_mounth_by_name(self, channel_id, user_name):
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -179,7 +179,7 @@ class DbMessageLogClient():
             print(f'Failed get message count of month for user {user_name} in db: {e}.')
             return None
         
-    def GetAllUsersMessageCountForMounth(self, channel_id):
+    def get_all_users_message_count_for_mounth(self, channel_id):
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -197,7 +197,7 @@ class DbMessageLogClient():
             print(f'Failed get message count of month for channel {channel_id} in db: {e}.')
             return None
         
-    def GetMaleniaInChannel(self, channel_id):
+    def get_malenia_in_channel(self, channel_id):
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -217,7 +217,7 @@ class DbMessageLogClient():
             print(f'Failed GetMaleniaInChannel {channel_id} in db: {e}.')
             return None
     
-    def _CheckUserExist(self, id, name):
+    def _check_user_exist(self, id, name):
         try:
             #Добавляю пользователя если его нет в таблицу пользователей
             #TODO При подключении считывать таблицу пользователей в память и искать Id в памяти и потом пытаться записать пользователя в БД
@@ -226,10 +226,10 @@ class DbMessageLogClient():
         except Exception as e:
             print(f'Failed check user in db: {e}.')
         
-    def _CheckConnection(self):
+    def _check_connection(self):
         try:
             self._conn.cursor() #Через какоето время _conn теряется, поэтому проверяю таким способом его наличие
         except AttributeError as e:
-            self.Connect()
+            self.connect()
 
             
