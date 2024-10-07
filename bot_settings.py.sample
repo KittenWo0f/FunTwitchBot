@@ -4,12 +4,15 @@
 ACCESS_TOKEN = ""
 REFRESH_TOKEN = ""
 CLIENT_ID = ""
+CLIENT_SECRET = ""
 #Список каналов на которых будет работать бот
 INITIAL_CHANNELS = []
 #Список каналов на которых допустимы ссылки для бота
 ALLOW_URL = []
 #Список каналов в которых допустима копипаста (копирует некоторые фразы и смайлы, содержатся в custom_commands_with_tag и custom_copypast_cmd файла some_data)
 ALLOW_FLOOD = []
+#Каналы для которых генерируется !ogeyofday.
+OGEY_OF_DAY_CHANNELS = ['gufovicky']
 #Префикс перед командами
 PREFIX = '!'
 
@@ -32,3 +35,9 @@ donats = {
 
 #Список пользоватлей для некоторых системных команд
 white_list = [] 
+
+#Запрос погоды
+weather_headers = {
+	"X-RapidAPI-Key": "",
+	"X-RapidAPI-Host": "weatherapi-com.p.rapidapi.com"
+}
