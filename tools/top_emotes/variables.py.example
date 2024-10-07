@@ -1,4 +1,4 @@
-#channel name
+#Имя канала
 CHANNEL_NAME = ""
 
 #emotes url
@@ -7,8 +7,8 @@ EMOTES_URL =  "http://127.0.0.1:8000"
 #twitch, 7tv, ffz, bttv
 PROVIDER = "twitch"
 
-#db connection string
+#Строка подключения к БД
 DB_CONN_STR = ""
 
-#output file
+#Выходной файл
 OUT_FILE = "emotes_top.csv"
