@@ -252,6 +252,7 @@ class db_message_log_client():
                         FROM users AS u 
                         JOIN denunciations AS den ON den.user_id = u.id
                         ORDER BY den.den_count DESC
+                        LIMIT 10
                         """)
             res = cur.fetchall()
             if res:
