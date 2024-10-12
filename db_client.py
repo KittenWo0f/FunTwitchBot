@@ -49,6 +49,7 @@ class db_message_log_client():
             return None
         
     def get_last_active_users(self, chanel_id):
+        self._check_connection()
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -71,6 +72,7 @@ class db_message_log_client():
             return None
     
     def get_random_message_by_user(self, user_id):
+        self._check_connection()
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -88,6 +90,7 @@ class db_message_log_client():
             return None
         
     def get_random_user_by_last_n_hours(self, channel_id, hours):
+        self._check_connection()
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -107,6 +110,7 @@ class db_message_log_client():
             return None
         
     def update_ogey(self, channel_id, ogey_id):
+        self._check_connection()
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -124,6 +128,7 @@ class db_message_log_client():
         return True
         
     def get_ogey(self, channel_id):
+        self._check_connection()
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -140,6 +145,7 @@ class db_message_log_client():
             return None
         
     def get_top_of_month_users(self, channel_id):
+        self._check_connection()
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -161,6 +167,7 @@ class db_message_log_client():
             return None
         
     def get_users_message_count_for_mounth_by_name(self, channel_id, user_name):
+        self._check_connection()
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -180,6 +187,7 @@ class db_message_log_client():
             return None
         
     def get_all_users_message_count_for_mounth(self, channel_id):
+        self._check_connection()
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -198,6 +206,7 @@ class db_message_log_client():
             return None
         
     def get_malenia_in_channel(self, channel_id):
+        self._check_connection()
         try:
             cur = self._conn.cursor()
             cur.execute("""
@@ -216,6 +225,41 @@ class db_message_log_client():
         except Exception as e:
             print(f'Failed GetMaleniaInChannel {channel_id} in db: {e}.')
             return None
+        
+    def add_denunciations_from_user(self, user_id):
+        self._check_connection()
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        INSERT INTO denunciations (user_id, den_count) 
+                        VALUES (%s, 1)
+                        ON CONFLICT (user_id) DO UPDATE
+                        SET den_count = denunciations.den_count + 1
+                        """,
+                        [user_id])
+            self._conn.commit()
+        except Exception as e:
+            print(f'Failed add_denunciations_from_user in db: {e}.')
+            return False
+        return True
+    
+    def get_top_denunciations_by_users(self):
+        self._check_connection()
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        SELECT u.name, den.den_count 
+                        FROM users AS u 
+                        JOIN denunciations AS den ON den.user_id = u.id
+                        ORDER BY den.den_count DESC
+                        """)
+            res = cur.fetchall()
+            if res:
+                return res
+        except Exception as e:
+            print(f'Failed get top of month denunciations users in db: {e}.')
+            return None
+        
     
     def _check_user_exist(self, id, name):
         try:

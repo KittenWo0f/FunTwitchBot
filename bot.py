@@ -18,13 +18,13 @@ from gpiozero import CPUTemperature
 class twitch_bot(commands.Bot):
 
     name = str()
-    dbLogClient = db_message_log_client(DB_CONNECTION_STRING)
+    db_log_client = db_message_log_client(DB_CONNECTION_STRING)
     msg_titles = ['сообщение', 'сообщения', 'сообщений']
     
     #Инициализация бота
     def __init__(self, name):
         super().__init__(token=ACCESS_TOKEN, prefix=PREFIX, initial_channels=INITIAL_CHANNELS)
-        self.dbLogClient.connect()
+        self.db_log_client.connect()
 
     #Событие готовности бота
     async def event_ready(self):
@@ -45,7 +45,7 @@ class twitch_bot(commands.Bot):
         localTime = utc_time.astimezone(tz.tzlocal())
         print(f'{localTime}({message.channel.name}){author_name}:{message.content}')
         channel_user = await message.channel.user(False)
-        self.dbLogClient.insert_message(message.content, author_id, author_name, channel_user, localTime)
+        self.db_log_client.insert_message(message.content, author_id, author_name, channel_user, localTime)
         
         if message.echo:
             return
@@ -75,7 +75,7 @@ class twitch_bot(commands.Bot):
             
         if(str(f'@{self.nick}') in str(message.content).lower()):
             channel_user = await message.channel.user()
-            await message.channel.send(f'@{message.author.name}, {self.dbLogClient.get_random_message_by_user(channel_user.id)}')
+            await message.channel.send(f'@{message.author.name}, {self.db_log_client.get_random_message_by_user(channel_user.id)}')
             #await message.channel.send(f'@{message.author.name}, {self.dbLogClient.GetRandomMessageByUser(40348923)}')
             return
         
@@ -123,7 +123,7 @@ class twitch_bot(commands.Bot):
     @commands.command(name='lastseen', aliases=['когдавидели'])
     async def last_seen(self, ctx: commands.Context):
         channel_user = await ctx.channel.user()
-        last_activity = self.dbLogClient.get_channel_author_last_activity(channel_user.id)
+        last_activity = self.db_log_client.get_channel_author_last_activity(channel_user.id)
         if (last_activity):
             await ctx.send(f'@{ctx.author.name}, в последний раз {ctx.channel.name} видели в чате {last_activity.strftime("%d.%m.%Y в %H:%M:%S")} CoolStoryBob');
         else:
@@ -176,7 +176,7 @@ class twitch_bot(commands.Bot):
         if ctx.channel.name not in OGEY_OF_DAY_CHANNELS:
             return
         channel_user = await ctx.channel.user()
-        ogey_name = self.dbLogClient.get_ogey(channel_user.id)
+        ogey_name = self.db_log_client.get_ogey(channel_user.id)
         if ogey_name != None:
             await ctx.send(f'@{ctx.author.name}, Ogey дня сегодня {ogey_name}, можно только позавидовать этому чатеру EZ Clap')
         else:
@@ -237,7 +237,7 @@ class twitch_bot(commands.Bot):
         if await self.is_stream_online(ctx.channel):
             return
         channel_user = await ctx.channel.user()
-        active_users = self.dbLogClient.get_last_active_users(channel_user.id)
+        active_users = self.db_log_client.get_last_active_users(channel_user.id)
         if not active_users:
             await ctx.send('Я не знаю кто был в чате недавно. Поэтому привет всем KonCha')
             return
@@ -251,7 +251,7 @@ class twitch_bot(commands.Bot):
     @commands.command(name='топ', aliases=['top'])
     async def top(self, ctx: commands.Context):
         channel_user = await ctx.channel.user()
-        top_users = self.dbLogClient.get_top_of_month_users(channel_user.id)
+        top_users = self.db_log_client.get_top_of_month_users(channel_user.id)
         if not top_users:
             await ctx.send('Не найдены сообщения для топа NotLikeThis')
             return
@@ -271,7 +271,7 @@ class twitch_bot(commands.Bot):
             name = phrase
         else:
             name = ctx.author.name
-        msg_count = self.dbLogClient.get_users_message_count_for_mounth_by_name(channel_user.id, name.lower())
+        msg_count = self.db_log_client.get_users_message_count_for_mounth_by_name(channel_user.id, name.lower())
         if not msg_count:
             await ctx.send(f'@{ctx.author.name}, не удалось подсчитать сообщения запрошеного пользователя NotLikeThis.')
             return
@@ -281,7 +281,7 @@ class twitch_bot(commands.Bot):
     @commands.command(name='всегонасрано')
     async def vsegonasrano(self, ctx: commands.Context):
         channel_user = await ctx.channel.user()
-        msg_count = self.dbLogClient.get_all_users_message_count_for_mounth(channel_user.id)
+        msg_count = self.db_log_client.get_all_users_message_count_for_mounth(channel_user.id)
         if not msg_count:
             await ctx.send(f'@{ctx.author.name}, не удалось подсчитать количество написаных сообщений NotLikeThis')
             return
@@ -291,7 +291,7 @@ class twitch_bot(commands.Bot):
     @commands.command(name='маления')
     async def malenia(self, ctx: commands.Context):
         channel_user = await ctx.channel.user()
-        msg_count = self.dbLogClient.get_malenia_in_channel(channel_user.id)
+        msg_count = self.db_log_client.get_malenia_in_channel(channel_user.id)
         if not msg_count:
             await ctx.send(f'@{ctx.author.name}, не удалось подсчитать упоминаний малений в этом чате NotLikeThis')
             return
@@ -317,6 +317,33 @@ class twitch_bot(commands.Bot):
                                     25: "SHTO",
                                     30: "EZ"}, length)
         await ctx.send(f"@{ctx.author.name} имеет сосиску {length} см. {emote}")
+        
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.user)
+    @commands.command(name='донос')
+    async def denunciation(self, ctx: commands.Context, phrase: str | None):
+        if phrase:
+            if not is_valid_args(phrase):
+                await ctx.send(f'@{ctx.author.name}, бана хочешь моего?')
+                return
+            else:
+                donos_na = phrase
+        else:
+            donos_na = f'канал @{ctx.channel.name}'
+        self.db_log_client.add_denunciations_from_user(ctx.author.id)
+        await ctx.send(f"@{ctx.author.name}, донос на {donos_na} был отправлен в соответствующие органы policeBear")
+        
+    @commands.cooldown(rate=1, per=300, bucket=commands.Bucket.user)
+    @commands.command(name='топдоносчиков')
+    async def top_denunciations(self, ctx: commands.Context):
+        top_denunciation_users = self.db_log_client.get_top_denunciations_by_users()
+        if not top_denunciation_users:
+            await ctx.send('Не найдены сообщения для топа доносчиков NotLikeThis')
+            return
+        msg = f'Топ доносчиков:'
+        for user_row in top_denunciation_users:
+            msg = f' {msg} {user_row[0]}({user_row[1]:,}),'
+        msg = msg + ' POLICE'
+        await ctx.send(msg)
                
     #Рутины
     @routines.routine(time = datetime.datetime(year = 2024, month = 6, day = 1, hour = 18, minute = 00))
@@ -325,8 +352,8 @@ class twitch_bot(commands.Bot):
             channels = await self.fetch_users([ch])
             channel_id = channels[0].id
             channel = self.get_channel(ch)
-            ogey_id = self.dbLogClient.get_random_user_by_last_n_hours(channel_id, 24)
-            if self.dbLogClient.update_ogey(channel_id, ogey_id):
+            ogey_id = self.db_log_client.get_random_user_by_last_n_hours(channel_id, 24)
+            if self.db_log_client.update_ogey(channel_id, ogey_id):
                 await channel.send(f'Ogey дня обновился. Чтобы узнать кто им стал введите команду !ogeyofday 4Head')
             else:
                 await channel.send(f'Не удалось определить нового Ogey. PoroSad')
