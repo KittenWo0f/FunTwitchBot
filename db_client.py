@@ -1,6 +1,24 @@
 import psycopg2
 import psycopg2.extensions
 
+# Определяем какие запросы у нас вообще доступны
+query_map = {
+  'insert_message': "INSERT INTO messages (timestamp, channel_id, author_id, message) VALUES (%s, %s, %s, %s)",
+  'get_channel_author_last_activity': "SELECT timestamp FROM messages WHERE author_id = %s AND channel_id = %s ORDER BY timestamp DESC LIMIT 1",
+  'get_last_active_users': """
+                        SELECT u.name
+                        FROM messages AS m
+                        JOIN users AS u ON u.id=m.author_id
+                        WHERE m.timestamp >= date_trunc('second', now()) - INTERVAL '43200 second'
+                        AND m.timestamp < (date_trunc('second', now()))
+                        AND m.channel_id = '%s'
+                        GROUP BY u.id
+                        ORDER BY MAX(m.timestamp) DESC
+                        LIMIT 20
+                        """,
+  'get_random_message_by_user': "SELECT message FROM public.messages AS m WHERE author_id = '%s' ORDER BY random() LIMIT 1"
+}
+
 class db_message_log_client():
         
     def __init__(self, connstr):
@@ -17,28 +35,23 @@ class db_message_log_client():
             return False
         return True
         
+    # Добавляю сообщение в таблицу сообщений
     def insert_message(self, message, author_id, author_name, channel, timestamp):
         self._check_connection()
         self._check_user_exist(channel.id, channel.name)
         self._check_user_exist(author_id, author_name)
         try:
-            #Добавляю сообщение в таблицу сообщений
-            self._conn.cursor().execute("INSERT INTO messages (timestamp, channel_id, author_id, message) VALUES (%s, %s, %s, %s)", (timestamp, channel.id, author_id, message))
+            self._conn.cursor().execute(query_map['insert_message'], (timestamp, channel.id, author_id, message))
             self._conn.commit()
         except Exception as e:
             print(f'Failed insert to db: {e}.')
     
+    # Получаю последнюю активность автора канала
     def get_channel_author_last_activity(self, id):
         self._check_connection()
         try:
             cur = self._conn.cursor()
-            cur.execute(""" 
-            SELECT timestamp FROM messages 
-            WHERE author_id = %s AND
-                channel_id = %s
-            ORDER BY timestamp DESC
-            LIMIT 1;
-            """, (id, id))
+            cur.execute(query_map['get_channel_author_last_activity'], (id, id))
             res = cur.fetchall()
             if res:
                 return res[0][0]
@@ -47,23 +60,13 @@ class db_message_log_client():
         except Exception as e:
             print(f'Failed get user last activity in db: {e}.')
             return None
-        
+
+    # Получаю последнюю активность пользователя    
     def get_last_active_users(self, chanel_id):
         self._check_connection()
         try:
             cur = self._conn.cursor()
-            cur.execute("""
-                        SELECT u.name
-                        FROM messages AS m
-                        JOIN users AS u ON u.id=m.author_id
-                        WHERE m.timestamp >= date_trunc('second', now()) - INTERVAL '43200 second'
-                        AND m.timestamp < (date_trunc('second', now()))
-                        AND m.channel_id = '%s'
-                        GROUP BY u.id
-                        ORDER BY MAX(m.timestamp) DESC
-                        LIMIT 20
-                        """,
-                        [chanel_id])
+            cur.execute(query_map['get_last_active_users'], [chanel_id])
             res = cur.fetchall()
             if res:
                 return res
@@ -71,17 +74,12 @@ class db_message_log_client():
             print(f'Failed check last active users in db: {e}.')
             return None
     
+    # Получаю случайное сообщение пользователя
     def get_random_message_by_user(self, user_id):
         self._check_connection()
         try:
             cur = self._conn.cursor()
-            cur.execute("""
-                        SELECT message FROM public.messages AS m
-                        WHERE author_id='%s'
-                        ORDER BY random()
-                        LIMIT 1
-                        """,
-                        [user_id])
+            cur.execute(query_map['get_random_message_by_user'], [user_id])
             res = cur.fetchall()
             if res:
                 return res[0][0]
