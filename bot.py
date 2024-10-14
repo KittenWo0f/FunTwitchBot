@@ -154,6 +154,8 @@ class twitch_bot(commands.Bot):
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='погода', aliases=['weather'])
     async def weather(self, ctx: commands.Context):
+        # Дефолтный смайлик в конце сообщения
+        smile = 'peepoPls'
         direct_translate = {
             'N' : 'С',
             'W' : 'З',
@@ -166,7 +168,16 @@ class twitch_bot(commands.Bot):
         response = requests.get(url, headers=weather_headers, params=querystring)
         if response.status_code < 400:
             jsonR = response.json()
-            await ctx.send(f'@{ctx.author.name}, в {jsonR["location"]["name"]} на данный момент {jsonR["current"]["temp_c"]}°C. {jsonR["current"]["condition"]["text"]}. Ветер {replace_chars(jsonR["current"]["wind_dir"], direct_translate)} {jsonR["current"]["wind_kph"] * 1000 / 3600:.2f} м/с. peepoPls')
+            # Переводим нашу погоду в более float состояние
+            location_temp = jsonR["current"]["temp_c"]
+            if location_temp <= 0:
+                smile = "Coldge"
+            elif location_temp > 29: 
+                smile = "hell"
+            await ctx.send(f'@{ctx.author.name}, в {jsonR["location"]["name"]} на данный момент {jsonR["current"]["temp_c"]}°C. \
+                            {jsonR["current"]["condition"]["text"]}. \
+                            Ветер {replace_chars(jsonR["current"]["wind_dir"], direct_translate)} {jsonR["current"]["wind_kph"] * 1000 / 3600:.2f} м/с. \
+                            {smile}')
         else:
             await ctx.send(f'@{ctx.author.name}, не удалось выполнить запрос погоды PoroSad')
             
