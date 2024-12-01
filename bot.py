@@ -119,15 +119,25 @@ class twitch_bot(commands.Bot):
     async def help_bot(self, ctx: commands.Context):
         await ctx.send(f'@{ctx.author.name} Я бот и я ничего не умею 4Head')
     
-    @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
+    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.user)
     @commands.command(name='lastseen', aliases=['когдавидели'])
-    async def last_seen(self, ctx: commands.Context):
-        channel_user = await ctx.channel.user()
-        last_activity = self.db_log_client.get_channel_author_last_activity(channel_user.id)
-        if (last_activity):
-            await ctx.send(f'@{ctx.author.name}, в последний раз {ctx.channel.name} видели в чате {last_activity.strftime("%d.%m.%Y в %H:%M:%S")} CoolStoryBob');
-        else:
-            await ctx.send(f'@{ctx.author.name}, я не помню когда в последний раз видел в чате {ctx.channel.name} PoroSad');
+    async def last_seen(self, ctx: commands.Context, phrase: str | None):
+        try:
+            channel_user = await ctx.channel.user()
+            if phrase:
+                search_user = await self.fetch_channel(phrase)
+                search_user = search_user.user
+                search_username = phrase
+            else:
+                search_user = channel_user
+                search_username = channel_user.name
+            last_activity = self.db_log_client.get_user_last_activity(channel_user.id, search_user.id)
+            if (last_activity):
+                await ctx.send(f'@{ctx.author.name}, в последний раз {search_username} видели в чате {last_activity.strftime("%d.%m.%Y в %H:%M:%S")} CoolStoryBob')
+            else:
+                await ctx.send(f'@{ctx.author.name}, я не помню когда в последний раз видел в чате {search_username} PoroSad')
+        except:
+            await ctx.send(f'@{ctx.author.name}, что-то пошло не так. Проверьте имя искомого пользователя eeeh')
     
     @commands.cooldown(rate=1, per=300, bucket=commands.Bucket.member)
     @commands.command(name='followage', aliases=['возрастотслеживания'])
@@ -180,7 +190,17 @@ class twitch_bot(commands.Bot):
                             {smile}')
         else:
             await ctx.send(f'@{ctx.author.name}, не удалось выполнить запрос погоды PoroSad')
-            
+    
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
+    @commands.command(name='курс')
+    async def kurs(self, ctx: commands.Context):
+        url = "https://www.cbr-xml-daily.ru/latest.js"
+        response = requests.get(url)
+        if response.status_code < 400:
+            await ctx.send(f'@{ctx.author.name}, 1 USD = {1 / response.json()["rates"]["USD"]:.2f} RUB GAGAGA')
+        else:
+            await ctx.send(f'@{ctx.author.name}, не удалось получить курс доллара PoroSad')
+    
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='ogeyofday')
     async def ogeyofday(self, ctx: commands.Context):

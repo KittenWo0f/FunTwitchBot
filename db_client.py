@@ -28,7 +28,7 @@ class db_message_log_client():
         except Exception as e:
             print(f'Failed insert to db: {e}.')
     
-    def get_channel_author_last_activity(self, id):
+    def get_user_last_activity(self, channel_id, author_id):
         self._check_connection()
         try:
             cur = self._conn.cursor()
@@ -38,7 +38,7 @@ class db_message_log_client():
                 channel_id = %s
             ORDER BY timestamp DESC
             LIMIT 1;
-            """, (id, id))
+            """, (author_id, channel_id))
             res = cur.fetchall()
             if res:
                 return res[0][0]
@@ -266,7 +266,7 @@ class db_message_log_client():
         try:
             #Добавляю пользователя если его нет в таблицу пользователей
             #TODO При подключении считывать таблицу пользователей в память и искать Id в памяти и потом пытаться записать пользователя в БД
-            self._conn.cursor().execute("INSERT INTO users (id, name) VALUES (%s, %s) ON CONFLICT DO NOTHING", (id, name))
+            self._conn.cursor().execute("INSERT INTO users (id, name) VALUES (%s, %s) ON CONFLICT (id) DO UPDATE SET name = %s WHERE users.name != %s", (id, name, name, name))
             self._conn.commit()
         except Exception as e:
             print(f'Failed check user in db: {e}.')
