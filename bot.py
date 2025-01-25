@@ -385,7 +385,8 @@ class twitch_bot(commands.Bot):
             channel = self.get_channel(ch)
             ogey_id = self.db_log_client.get_random_user_by_last_n_hours(channel_id, 24)
             if self.db_log_client.update_ogey(channel_id, ogey_id):
-                await channel.send(f'Ogey дня обновился. Чтобы узнать кто им стал введите команду !ogeyofday 4Head')
+                users = await self.fetch_users(None, [ogey_id])
+                await channel.send(f'Ogey дня обновился. Им стал {users[0].display_name}, можно только позавидовать этому чатеру EZ Clap')
             else:
                 await channel.send(f'Не удалось определить нового Ogey. PoroSad')
         
