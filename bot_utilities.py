@@ -22,8 +22,6 @@ def check_regex_rule(val, rule):
     return res is not None
 
 def is_valid_args(args) -> bool:
-    if check_regex_rule(str(args).replace(" ",""), REGEX_IS_URL_TEST):
-        return False
     if not check_regex_rule(str(args), REGEX_SPEC_SYMB_RULE_TEST):
         return False
     if get_char_cnt(args, set(SPEC_SYMBOLS)) > 7:
@@ -31,8 +29,6 @@ def is_valid_args(args) -> bool:
     if len(args) > 25 and not ' ' in args:
         return False
     for arg in args.split():
-        if check_regex_rule(str(arg), REGEX_IS_URL_TEST):
-            return False
         if not check_regex_rule(str(arg), REGEX_SPEC_SYMB_RULE_TEST):
             return False
     return True
