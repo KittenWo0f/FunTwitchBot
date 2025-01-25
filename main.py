@@ -1,4 +1,8 @@
 from bot import twitch_bot
+import sys
 
-bot = twitch_bot('twitch_bot')
-bot.run()
+try:
+    bot = twitch_bot('twitch_bot')
+    bot.run()
+except:
+    sys.exit(1)
