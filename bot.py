@@ -39,13 +39,9 @@ class twitch_bot(commands.Bot):
         else:
             author_id = message.author.id 
             author_name = message.author.name
-        
-        utc_time = message.timestamp
-        utc_time = utc_time.replace(tzinfo=tz.tzutc())
-        localTime = utc_time.astimezone(tz.tzlocal())
-        print(f'{localTime}({message.channel.name}){author_name}:{message.content}')
+        print(f'({message.channel.name}){author_name}:{message.content}')
         channel_user = await message.channel.user(False)
-        self.db_log_client.insert_message(message.content, author_id, author_name, channel_user, localTime)
+        self.db_log_client.insert_message(message.content, author_id, author_name, channel_user)
         
         if message.echo:
             return
@@ -55,28 +51,33 @@ class twitch_bot(commands.Bot):
             return
         
         ctx = await self.get_context(message)
-        #Опускание мубота
-        if message.author.name == 'moobot':
-            await ctx.reply(f'Мубот соси')
+        
+        check_str = re.split(r',|!|;|\.|\?', message.content)[0]
+        
+        # Попугайничество
+        if check_str in custom_copypast_cmd and message.channel.name in ALLOW_FLOOD:
+            await message.channel.send(check_str)
             return
 
-        #Приветствия и покатствия
-        check_str = re.split(r',|!|;|\.|\?', message.content)[0]
+        # Приветствия 
         if check_str in hellos:
             await ctx.reply(f'{random.choice(hellos)}')
             return
+        
+        # Покатствия
         if check_str in byes:
             await ctx.reply(f'{random.choice(byes)}')
             return
         
-        
-        if check_str in custom_copypast_cmd and message.channel.name in ALLOW_FLOOD:
-            await message.channel.send(check_str)
-            return
-            
+        # Ответ на сообщение если было обращение к боту
         if(str(f'@{self.nick}') in str(message.content).lower()):
             channel_user = await message.channel.user()
             await ctx.reply(f'{self.db_log_client.get_random_message_by_user(channel_user.id)}')
+            return
+        
+        # Опускание мубота
+        if message.author.name == 'moobot':
+            await ctx.reply(f'Мубот соси')
             return
         
     #Информационные команды
@@ -405,11 +406,11 @@ class twitch_bot(commands.Bot):
     
     #Событие подключения к чату
     async def event_join(self, channel: Channel, user: User):
-        print(f'{datetime.datetime.now()}: Пользователь {user.name} вошел в чат {channel.name}')
+        print(f'Пользователь {user.name} вошел в чат {channel.name}')
         if channel.name == user.name:
             channel_user = await channel.user() #id отсутвует в User поэтому приходится запрашивать
             await channel.send(f'Привет, мир! KonCha')
-            print(f'{datetime.datetime.now()}: Стример в чате {channel_user.name}')
+            print(f'Стример в чате {channel_user.name}')
             
     async def event_ready(self):
         #Старт рутин

@@ -17,13 +17,13 @@ class db_message_log_client():
             return False
         return True
         
-    def insert_message(self, message, author_id, author_name, channel, timestamp):
+    def insert_message(self, message, author_id, author_name, channel):
         self._check_connection()
         self._check_user_exist(channel.id, channel.name)
         self._check_user_exist(author_id, author_name)
         try:
             #Добавляю сообщение в таблицу сообщений
-            self._conn.cursor().execute("INSERT INTO messages (timestamp, channel_id, author_id, message) VALUES (%s, %s, %s, %s)", (timestamp, channel.id, author_id, message))
+            self._conn.cursor().execute("INSERT INTO messages (timestamp, channel_id, author_id, message) VALUES (now(), %s, %s, %s)", (channel.id, author_id, message))
             self._conn.commit()
         except Exception as e:
             print(f'Failed insert to db: {e}.')
