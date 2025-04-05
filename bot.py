@@ -122,7 +122,17 @@ class twitch_bot(commands.Bot):
         
     @commands.command(name='help', aliases=['commands', 'команды', 'помощь', 'бот'])
     async def help_bot(self, ctx: commands.Context):
-        await ctx.reply(f'@{ctx.author.name} Я бот и я ничего не умею 4Head')
+        # Получаем список всех команд бота
+        command_list = [cmd for cmd in self.commands]
+        # Формируем сообщение
+        if command_list:
+            message = f"@{ctx.author.name} Доступные команды: {', '.join(command_list)}"
+        else:
+            message = f"@{ctx.author.name} У меня нет команд PoroSad"
+
+        for chunk in split_string_by_words(message):
+            await ctx.reply(chunk)
+            await asyncio.sleep(2)
     
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.user)
     @commands.command(name='lastseen', aliases=['когдавидели'])
@@ -266,7 +276,7 @@ class twitch_bot(commands.Bot):
     async def fact(self, ctx: commands.Context):
         for chunk in split_string_by_words(get_rand_fact()):
             await ctx.reply(chunk)
-            asyncio.sleep(1)
+            await asyncio.sleep(2)
         
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.user)
     @commands.command(name='ауф', aliases=['auf'])
@@ -418,7 +428,6 @@ class twitch_bot(commands.Bot):
         # Запускаем бэкап в фоне
         backup_path, message = await self.db_log_client.async_db_backup("db_backups", 9)
         
-        asyncio.sleep(2)
         if backup_path:
             # Отправка файла в телегу
             await self.telegram_notifier.send_file(backup_path)
