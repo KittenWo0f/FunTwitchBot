@@ -168,7 +168,7 @@ class twitch_bot(commands.Bot):
       
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='погода', aliases=['weather'])
-    async def weather(self, ctx: commands.Context):
+    async def weather(self, ctx: commands.Context, *, phrase: str | None):
         # Дефолтный смайлик в конце сообщения
         smile = 'peepoPls'
         direct_translate = {
@@ -178,8 +178,7 @@ class twitch_bot(commands.Bot):
             'E' : 'В'
         }
         url = "https://weatherapi-com.p.rapidapi.com/current.json"
-        arg = ctx.message.content.rstrip(' ').split(' ', 1)[1]
-        querystring = {"q":arg,"lang":"ru"}
+        querystring = {"q":phrase,"lang":"ru"}
         response = requests.get(url, headers=weather_headers, params=querystring)
         if response.status_code < 400:
             jsonR = response.json()
@@ -221,7 +220,7 @@ class twitch_bot(commands.Bot):
     #Команды под оффлайн чат 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='чмок')
-    async def chmok(self, ctx: commands.Context, phrase: str | None):
+    async def chmok(self, ctx: commands.Context, *, phrase: str | None):
         if await self.is_stream_online(ctx.channel):
             return
         if len(ctx.chatters) == 0:
@@ -240,7 +239,7 @@ class twitch_bot(commands.Bot):
                 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='лапочка')
-    async def lapochka(self, ctx: commands.Context, phrase: str | None):
+    async def lapochka(self, ctx: commands.Context, *, phrase: str | None):
         if await self.is_stream_online(ctx.channel):
             return
         if len(ctx.chatters) == 0:
@@ -363,7 +362,7 @@ class twitch_bot(commands.Bot):
         
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.user)
     @commands.command(name='донос')
-    async def denunciation(self, ctx: commands.Context, phrase: str | None):
+    async def denunciation(self, ctx: commands.Context, *, phrase: str | None):
         if phrase:
             if not is_valid_args(phrase):
                 await ctx.reply(f'Бана хочешь моего?')
