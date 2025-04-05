@@ -299,7 +299,7 @@ class db_message_log_client():
         self,
         backup_dir: str,
         compress_level: int = 0
-        ) -> Tuple[bool, str]:
+        ) -> Tuple[str, str]:
         try:
             os.makedirs(backup_dir, exist_ok=True)
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -333,13 +333,13 @@ class db_message_log_client():
             
             if process.returncode != 0:
                 error = stderr.decode('utf-8') if stderr else "Unknown error"
-                return False, f"Ошибка бэкапа: {error}"
+                return None, f"Ошибка бэкапа: {error}"
             
             size_mb = os.path.getsize(backup_path) / (1024 * 1024)
-            return True, f"Бэкап создан. Размер: {size_mb:.2f} МБ"
+            return backup_path, f"Бэкап создан. Размер: {size_mb:.2f} МБ"
         
         except Exception as e:
-            return False, f"Ошибка бэкапа: {str(e)}"
+            return None, f"Ошибка бэкапа: {str(e)}"
 
 
             

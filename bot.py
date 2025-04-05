@@ -6,6 +6,7 @@ from twitchio.user import User
 from twitchio.channel import Channel
 from db_client import db_message_log_client
 import asyncio
+from os import path, remove
 
 import datetime
 import calendar
@@ -405,33 +406,28 @@ class twitch_bot(commands.Bot):
                 await channel.send(f'Ogey дня обновился. Им стал {users[0].display_name}, можно только позавидовать этому чатеру EZ Clap')
             else:
                 await channel.send(f'Не удалось определить нового Ogey. PoroSad')
+    
+    @routines.routine(time = datetime.datetime(year = 2025, month = 4, day = 6, hour = 2, minute = 0))
+    async def backup_db_routine(self):
+        # Запускаем бэкап в фоне
+        backup_path, message = await self.db_log_client.async_db_backup("db_backups", 9)
         
+        asyncio.sleep(2)
+        if backup_path:
+            # Отправка файла в телегу
+            await self.telegram_notifier.send_file(backup_path)
+            # Удаление файла с диска 
+            if path.exists(backup_path):
+                remove(backup_path)
+        else:
+            await self.telegram_admin_notifier.send_message(f"{message}")
+    
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
     async def temperature(self, ctx: commands.Context):
         if ctx.author.name in white_list:
             cpu_t = CPUTemperature()
             await ctx.reply(f'Моя горячесть равна {cpu_t.temperature} градусам')
-            
-    @commands.command(name='backup', aliases=['бэкап'])
-    async def backup_command(self, ctx: commands.Context):
-        # Проверяем права пользователя
-        if ctx.author.name not in white_list:
-            await ctx.reply("У вас недостаточно прав для выполнения бэкапа! Stare")
-            return
-        
-        # Отправляем сообщение о начале бэкапа
-        await ctx.send("Запуск бэкапа... Waiting")
-        
-        # Запускаем бэкап в фоне
-        success, message = await self.db_log_client.async_db_backup("db_backups", 9)
-        
-        # Отправляем результат
-        asyncio.sleep(2)
-        if success:
-            await ctx.send(f"{message} PogChamp")
-        else:
-            await ctx.send(f"{message} NotLikeThis")
 
     #Обработка исключений
     async def event_command_error(self, ctx, error: Exception) -> None:
@@ -450,6 +446,7 @@ class twitch_bot(commands.Bot):
     async def event_ready(self):
         #Старт рутин
         self.ogey_of_day_routine.start()
+        self.backup_db_routine.start()
         
     #Дополнительные функции        
     async def is_stream_online(self, channel) -> bool:
