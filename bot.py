@@ -4,6 +4,7 @@ from twitchio.ext import commands, routines
 from twitchio.user import User
 from twitchio.channel import Channel
 from db_client import db_message_log_client
+import asyncio
 
 import datetime
 import calendar
@@ -18,7 +19,7 @@ from gpiozero import CPUTemperature
 class twitch_bot(commands.Bot):
 
     name = str()
-    db_log_client = db_message_log_client(DB_CONNECTION_STRING)
+    db_log_client = db_message_log_client(DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD)
     msg_titles = ['сообщение', 'сообщения', 'сообщений']
     
     #Инициализация бота
@@ -397,6 +398,26 @@ class twitch_bot(commands.Bot):
         if ctx.author.name in white_list:
             cpu_t = CPUTemperature()
             await ctx.reply(f'Моя горячесть равна {cpu_t.temperature} градусам')
+            
+    @commands.command(name='backup', aliases=['бэкап'])
+    async def backup_command(self, ctx: commands.Context):
+        # Проверяем права пользователя
+        if ctx.author.name not in white_list:
+            await ctx.reply("У вас недостаточно прав для выполнения бэкапа! Stare")
+            return
+        
+        # Отправляем сообщение о начале бэкапа
+        await ctx.send("Запуск бэкапа... Waiting")
+        
+        # Запускаем бэкап в фоне
+        success, message = await self.db_log_client.async_db_backup("db_backups", 9)
+        
+        # Отправляем результат
+        asyncio.sleep(2)
+        if success:
+            await ctx.send(f"{message} PogChamp")
+        else:
+            await ctx.send(f"{message} NotLikeThis")
 
     #Обработка исключений
     async def event_command_error(self, ctx, error: Exception) -> None:

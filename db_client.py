@@ -1,17 +1,35 @@
 import psycopg2
 import psycopg2.extensions
+# Для бэкапа
+import asyncio
+import os
+import datetime
+from typing import Optional, Tuple
 
 class db_message_log_client():
         
-    def __init__(self, connstr):
+    def __init__(self, 
+                host: str,
+                db_name: str,
+                port: int,
+                user: str,
+                password: str):
         self._conn = None
-        self._connstr = connstr
+        self._host = host
+        self._db_name = db_name
+        self._port = port
+        self._user = user
+        self._password = password
     def __del__(self):
         self._conn.close()
     
     def connect(self) -> bool:
         try:
-            self._conn = psycopg2.connect(self._connstr)
+            self._conn = psycopg2.connect(f'''dbname={self._db_name} 
+                                          user={self._user} 
+                                          password={self._password}
+                                          host={self._host} 
+                                          port={self._port}''')
         except Exception as e:
             print(f'Failed connect to db: {e}.')
             return False
@@ -276,5 +294,52 @@ class db_message_log_client():
             self._conn.cursor() #Через какоето время _conn теряется, поэтому проверяю таким способом его наличие
         except AttributeError as e:
             self.connect()
+            
+    async def async_db_backup(
+        self,
+        backup_dir: str,
+        compress_level: int = 0
+        ) -> Tuple[bool, str]:
+        try:
+            os.makedirs(backup_dir, exist_ok=True)
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            backup_path = os.path.join(backup_dir, f"{self._db_name}_{timestamp}.backup")
+            
+            command = [
+                'pg_dump',
+                '--host', self._host,
+                '--port', str(self._port),
+                '--username', self._user,
+                '--format', 'custom',
+                '--blobs',
+                '--file', backup_path,
+                self._db_name
+            ]
+            
+            if compress_level > 0:
+                command.extend(['--compress', str(compress_level)])
+            
+            env = os.environ.copy()
+            env['PGPASSWORD'] = self._password
+            
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                env=env,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            _, stderr = await process.communicate()
+            
+            if process.returncode != 0:
+                error = stderr.decode('utf-8') if stderr else "Unknown error"
+                return False, f"Ошибка бэкапа: {error}"
+            
+            size_mb = os.path.getsize(backup_path) / (1024 * 1024)
+            return True, f"Бэкап создан. Размер: {size_mb:.2f} МБ"
+        
+        except Exception as e:
+            return False, f"Ошибка бэкапа: {str(e)}"
+
 
             

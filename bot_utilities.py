@@ -1,13 +1,13 @@
 from random import choice as randChoise
 from urllib.parse import urlparse
 from regex_tests import *
-#Для парсера
+# Для парсера
 from bs4 import BeautifulSoup
 import requests
 import random
-#Для подсчета спецсимволов
+# Для подсчета спецсимволов
 from collections import Counter
-#Для сохранения объектов
+# Для сохранения объектов
 import pickle
 
 def get_random_emotion() -> str:

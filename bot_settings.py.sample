@@ -1,6 +1,6 @@
-#Файл с настройками бота
-#Для использования переименовтать в bot_settings.py
-#Данные бота для инициализации. Получить можно тут - https://twitchtokengenerator.com/
+# Файл с настройками бота
+# Для использования переименовтать в bot_settings.py
+# Данные бота для инициализации. Получить можно тут - https://twitchtokengenerator.com/
 ACCESS_TOKEN = ""
 REFRESH_TOKEN = ""
 CLIENT_ID = ""
@@ -16,7 +16,14 @@ OGEY_OF_DAY_CHANNELS = ['gufovicky']
 #Префикс перед командами
 PREFIX = '!'
 
-#Информационные команды для разных каналов
+# База данных
+DB_HOST = "localhost"
+DB_PORT = 5432
+DB_NAME = "twitchlogger"
+DB_USER = "postgres"
+DB_PASSWORD = "admin"
+
+# Информационные команды для разных каналов
 telegrams = {
     "channelName": "message"
 }
@@ -33,10 +40,10 @@ donats = {
     "channelName": "message"
 }
 
-#Список пользоватлей для некоторых системных команд
+# Список пользоватлей для некоторых системных команд
 white_list = [] 
 
-#Запрос погоды
+# Запрос погоды
 weather_headers = {
 	"X-RapidAPI-Key": "",
 	"X-RapidAPI-Host": "weatherapi-com.p.rapidapi.com"

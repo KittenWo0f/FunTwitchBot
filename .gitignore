@@ -40,3 +40,4 @@ different_tests.py
 /tools/top_emotes/variables.py
 .vscode
 .venv/
+db_backups/
