@@ -59,6 +59,66 @@ def get_today_holiday() -> str:
     holiHTML = random.choice(soup.find_all('span', itemprop='text')).find_all(text = True, recursive=False)[0]
     return str(holiHTML)
 
+def get_rand_fact() -> str:
+    url = f'https://randstuff.ru/fact/'
+    header = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
+    }
+    req = requests.get(url, headers=header)
+    soup = BeautifulSoup(req.content.decode('utf-8','ignore'), "html.parser")
+    fact_div = soup.find('div', id='fact')
+    res_fact = None
+    if fact_div:
+        fact_table = fact_div.find('table', class_='text')
+        if fact_table:
+            fact_td = fact_table.find('td')
+            if fact_td:
+                res_fact = fact_td.get_text(strip=True)
+    return res_fact
+
+def split_string_by_words(text, max_length=250) -> list: 
+    """
+    Разбивает строку на подстроки, сохраняя целостность слов.
+    
+    :param text: Исходная строка для разбиения
+    :param max_length: Максимальная длина подстроки (по умолчанию 250)
+    :return: Список подстрок
+    """
+    if not text:
+        return []
+    
+    words = text.split()
+    result = []
+    current_line = []
+    current_length = 0
+    
+    for word in words:
+        # Проверяем, поместится ли слово в текущую строку
+        # Учитываем пробел между словами (если это не первое слово)
+        word_length = len(word)
+        space_length = 1 if current_line else 0
+        
+        if current_length + space_length + word_length <= max_length:
+            current_line.append(word)
+            current_length += space_length + word_length
+        else:
+            # Если строка не пустая, добавляем её в результат
+            if current_line:
+                result.append(' '.join(current_line))
+                current_line = [word]
+                current_length = word_length
+            else:
+                # Если слово само по себе длиннее max_length, разбиваем его принудительно
+                result.append(word[:max_length])
+                current_line = [word[max_length:]]
+                current_length = len(word[max_length:])
+    
+    # Добавляем последнюю строку, если она не пустая
+    if current_line:
+        result.append(' '.join(current_line))
+        
+    return result
+
 def get_char_cnt(string, symbols) -> int:
     cnt = 0
     counter = Counter(string)

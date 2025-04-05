@@ -262,6 +262,13 @@ class twitch_bot(commands.Bot):
     async def anek(self, ctx: commands.Context):
         await ctx.reply(get_rand_anek())
         
+    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
+    @commands.command(name='факт', aliases=['fact'])
+    async def fact(self, ctx: commands.Context):
+        for chunk in split_string_by_words(get_rand_fact()):
+            await ctx.reply(chunk)
+            asyncio.sleep(1)
+        
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.user)
     @commands.command(name='ауф', aliases=['auf'])
     async def auf(self, ctx: commands.Context):
