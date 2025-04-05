@@ -17,11 +17,15 @@ OGEY_OF_DAY_CHANNELS = ['gufovicky']
 PREFIX = '!'
 
 # База данных
-DB_HOST = "localhost"
+DB_HOST = 'localhost'
 DB_PORT = 5432
-DB_NAME = "twitchlogger"
-DB_USER = "postgres"
-DB_PASSWORD = "admin"
+DB_NAME = 'twitchlogger'
+DB_USER = 'postgres'
+DB_PASSWORD = 'admin'
+
+# Телеграм
+TELEGRAM_BOT_TOKEN = ''
+TELEGRAM_ADMIN_CHAT_ID = 0
 
 # Информационные команды для разных каналов
 telegrams = {

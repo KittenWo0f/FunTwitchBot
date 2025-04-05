@@ -1,5 +1,6 @@
 from bot_settings import *
 from some_data import *
+from telegram_admin_notifier import telegram_admin_notifier
 from twitchio.ext import commands, routines
 from twitchio.user import User
 from twitchio.channel import Channel
@@ -20,6 +21,7 @@ class twitch_bot(commands.Bot):
 
     name = str()
     db_log_client = db_message_log_client(DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD)
+    telegram_notifier = telegram_admin_notifier(TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID)
     msg_titles = ['сообщение', 'сообщения', 'сообщений']
     
     #Инициализация бота
@@ -377,6 +379,18 @@ class twitch_bot(commands.Bot):
             msg = f' {msg} {user_row[0]}({user_row[1]:,}),'
         msg = msg + ' POLICE'
         await ctx.reply(msg)
+        
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.user)
+    @commands.command(name='админу')
+    async def to_admin(self, ctx: commands.Context, *, phrase: str | None):
+        if phrase:
+            success = await self.telegram_notifier.send_message(f'''{ctx.author.name} ({ctx.channel.name}): {phrase}''')
+            if success:
+                await ctx.reply(f'Ваше сообщение было отправлено админу NOTED')
+            else:
+                await ctx.reply(f'Не удалось отправить ваше сообщение админу NotLikeThis')
+        else:
+            await ctx.reply(f'Необходимо добавить текст сообщения в команде CaitThinking ')
                
     #Рутины
     @routines.routine(time = datetime.datetime(year = 2024, month = 6, day = 1, hour = 18, minute = 00))
