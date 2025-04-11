@@ -277,6 +277,17 @@ class twitch_bot(commands.Bot):
         for chunk in split_string_by_words(get_rand_fact()):
             await ctx.reply(chunk)
             await asyncio.sleep(2)
+    
+    @commands.cooldown(rate=1, per=180, bucket=commands.Bucket.channel)
+    @commands.command(name='гороскоп', aliases=['prediction'])
+    async def prediction(self, ctx: commands.Context, phrase: str | None):
+        prediction = get_prediction(phrase)
+        if prediction:
+            for chunk in split_string_by_words(prediction):
+                await ctx.reply(chunk)
+                await asyncio.sleep(2)
+        else:
+            await ctx.reply(f'Не удалось получить гороскоп по вашему запросу PoroSad')
         
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.user)
     @commands.command(name='ауф', aliases=['auf'])
@@ -397,7 +408,7 @@ class twitch_bot(commands.Bot):
         msg = msg + ' POLICE'
         await ctx.reply(msg)
         
-    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.user)
+    @commands.cooldown(rate=1, per=10800, bucket=commands.Bucket.user)
     @commands.command(name='админу')
     async def to_admin(self, ctx: commands.Context, *, phrase: str | None):
         if phrase:

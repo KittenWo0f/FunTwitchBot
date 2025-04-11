@@ -76,6 +76,42 @@ def get_rand_fact() -> str:
                 res_fact = fact_td.get_text(strip=True)
     return res_fact
 
+def get_prediction(sign: str) -> str | None:
+    sign = sign.lower()
+    signes = {
+        "овен": "aries",
+        "телец": "taurus",
+        "близнецы": "gemini",
+        "рак": "cancer",
+        "лев": "leo",
+        "дева": "virgo",
+        "весы": "libra",
+        "скорпион": "scorpio",
+        "стрелец": "sagittarius",
+        "козерог": "capricorn",
+        "водолей": "aquarius",
+        "рыбы": "pisces"
+    }
+    
+    sign_name = signes.get(sign)
+    if not sign_name:
+        return None
+    
+    url = f'https://horoscopes.rambler.ru/{sign_name}/'
+    header = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
+    }
+    req = requests.get(url, headers=header)
+    soup = BeautifulSoup(req.content.decode('utf-8','ignore'), "html.parser")
+
+    # Находим элемент с текстом гороскопа
+    horoscope_block = soup.find('div', itemprop='articleBody')
+    if horoscope_block:
+        horoscope_text = horoscope_block.find('p').get_text(strip=True)
+        return horoscope_text
+    else:
+        return None
+
 def split_string_by_words(text, max_length=250) -> list: 
     """
     Разбивает строку на подстроки, сохраняя целостность слов.
