@@ -140,9 +140,10 @@ class twitch_bot(commands.Bot):
         try:
             channel_user = await ctx.channel.user()
             if phrase:
-                search_user = await self.fetch_channel(phrase)
+                username = phrase.lstrip('@')
+                search_user = await self.fetch_channel(username)
                 search_user = search_user.user
-                search_username = phrase
+                search_username = username
             else:
                 search_user = channel_user
                 search_username = channel_user.name
@@ -330,8 +331,9 @@ class twitch_bot(commands.Bot):
             await ctx.reply('Не найдены сообщения для топа NotLikeThis')
             return
         msg = f'Топ месяца по сообщениям:'
-        for i, user_row in enumerate(top_users):
-            msg = f' {msg} {i + 1}. {user_row[0]} ({user_row[1]:,}, {(user_row[1]/hours_from_mounth_begin()):.2f} с/ч),'
+        for user_row in top_users:
+            msg = f' {msg} {user_row[0]} ({user_row[1]:,}, {(user_row[1]/hours_from_mounth_begin()):.2f} с/ч),'
+        msg = msg[:-1]
         msg = msg + ' PogChamp'
         await ctx.reply(msg)
         
@@ -342,7 +344,7 @@ class twitch_bot(commands.Bot):
             return
         channel_user = await ctx.channel.user()
         if phrase:
-            name = phrase
+            name = phrase.lstrip('@')
         else:
             name = ctx.author.name
         msg_count = self.db_log_client.get_users_message_count_for_mounth_by_name(channel_user.id, name.lower())
