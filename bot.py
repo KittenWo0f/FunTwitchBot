@@ -332,7 +332,7 @@ class twitch_bot(commands.Bot):
             return
         msg = f'Топ месяца по сообщениям:'
         for user_row in top_users:
-            msg = f' {msg} {user_row[0]} ({user_row[1]:,}, {(user_row[1]/hours_from_mounth_begin()):.2f} с/ч),'
+            msg = f' {msg} {user_row[0]} ({format_with_apostrophe(user_row[1])}, {(user_row[1]/hours_from_mounth_begin()):.2f} с/ч),'
         msg = msg[:-1]
         msg = msg + ' PogChamp'
         await ctx.reply(msg)
@@ -351,7 +351,7 @@ class twitch_bot(commands.Bot):
         if not msg_count:
             await ctx.reply(f'Не удалось подсчитать сообщения запрошеного пользователя NotLikeThis.')
             return
-        await ctx.reply(f"В этом месяце {name} написал в чате {msg_count:,} {decl_of_num(msg_count, self.msg_titles)}, скорость: {(msg_count/hours_from_mounth_begin()):.2f} с/ч PogChamp")
+        await ctx.reply(f"В этом месяце {name} написал в чате {format_with_apostrophe(msg_count)} {decl_of_num(msg_count, self.msg_titles)}, скорость: {(msg_count/hours_from_mounth_begin()):.2f} с/ч PogChamp")
         
     @commands.cooldown(rate=1, per=300, bucket=commands.Bucket.channel)
     @commands.command(name='всегонасрано')

@@ -240,3 +240,12 @@ async def get_current_time_in_city(city_name: str) -> str | None:
             return None
         except Exception as e:
             return None
+        
+def format_with_apostrophe(number):
+    s = str(number)
+    result = []
+    for i, char in enumerate(reversed(s)):
+        if i % 3 == 0 and i != 0:
+            result.append("'")
+        result.append(char)
+    return "".join(reversed(result))
