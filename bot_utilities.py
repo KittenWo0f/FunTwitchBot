@@ -10,6 +10,10 @@ import random
 from collections import Counter
 # Для сохранения объектов
 import pickle
+# Для времени 
+import pytz
+from timezonefinder import TimezoneFinder
+import aiohttp
 
 def get_random_emotion() -> str:
     emotions = ['GunRun', 'GlitchCat', 'FallHalp', 'FallWinning', 'BrokeBack', 'BloodTrail', 'CaitlynS', 'CarlSmile']
@@ -199,3 +203,40 @@ def hours_from_mounth_begin() -> float:
     time_passed = now - first_day_of_month
     hours_passed = (time_passed.total_seconds() + 1) // 3600
     return hours_passed
+
+async def fetch_location(city_name: str, session: aiohttp.ClientSession) -> tuple:
+    """Асинхронный геокодинг через Nominatim API"""
+    url = "https://nominatim.openstreetmap.org/search"
+    params = {
+        'q': city_name,
+        'format': 'json',
+        'limit': 1
+    }
+    
+    async with session.get(url, params=params) as response:
+        data = await response.json()
+        if not data:
+            raise ValueError("Город не найден")
+        return float(data[0]['lat']), float(data[0]['lon'])
+
+async def get_current_time_in_city(city_name: str) -> str | None:
+    async with aiohttp.ClientSession() as session:
+        try:
+            # Получаем координаты
+            lat, lon = await fetch_location(city_name, session)
+            
+            # Определяем временную зону
+            tf = TimezoneFinder()
+            timezone_str = tf.timezone_at(lat=lat, lng=lon)
+            if not timezone_str:
+                return None
+            
+            # Получаем текущее время
+            timezone = pytz.timezone(timezone_str)
+            current_time = datetime.datetime.now(timezone)
+            return current_time.strftime('%H:%M:%S')
+        
+        except ValueError as e:
+            return None
+        except Exception as e:
+            return None

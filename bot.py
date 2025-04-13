@@ -204,6 +204,17 @@ class twitch_bot(commands.Bot):
                             {smile}')
         else:
             await ctx.reply(f'Не удалось выполнить запрос погоды PoroSad')
+            
+    @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
+    @commands.command(name='время', aliases=['time'])
+    async def time(self, ctx: commands.Context, *, phrase: str | None):
+        if not phrase:
+            return
+        time = await get_current_time_in_city(phrase)
+        if time:
+            await ctx.reply(f'В {phrase} сейчас {time} MadgeTime')
+        else:
+            await ctx.reply(f'Не удалось узнать время в указаном месте PoroSad')
     
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
     @commands.command(name='курс')
