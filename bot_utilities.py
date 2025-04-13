@@ -1,6 +1,7 @@
 from random import choice as randChoise
 from urllib.parse import urlparse
 from regex_tests import *
+import datetime
 # Для парсера
 from bs4 import BeautifulSoup
 import requests
@@ -191,3 +192,10 @@ def get_val_by_max_val(dictionary, val):
         if val <= k:
             return v
     return None
+
+def hours_from_mounth_begin() -> float:
+    now = datetime.datetime.now()
+    first_day_of_month = datetime.datetime(now.year, now.month, 1)
+    time_passed = now - first_day_of_month
+    hours_passed = (time_passed.total_seconds() + 1) // 3600
+    return hours_passed

@@ -319,8 +319,8 @@ class twitch_bot(commands.Bot):
             await ctx.reply('Не найдены сообщения для топа NotLikeThis')
             return
         msg = f'Топ месяца по сообщениям:'
-        for user_row in top_users:
-            msg = f' {msg} {user_row[0]}({user_row[1]:,}),'
+        for i, user_row in enumerate(top_users):
+            msg = f' {msg} {i + 1}. {user_row[0]} ({user_row[1]:,}, {(user_row[1]/hours_from_mounth_begin()):.2f} с/ч),'
         msg = msg + ' PogChamp'
         await ctx.reply(msg)
         
@@ -338,7 +338,7 @@ class twitch_bot(commands.Bot):
         if not msg_count:
             await ctx.reply(f'Не удалось подсчитать сообщения запрошеного пользователя NotLikeThis.')
             return
-        await ctx.reply(f"В этом месяце {name} написал в чате {msg_count:,} {decl_of_num(msg_count, self.msg_titles)} PogChamp")
+        await ctx.reply(f"В этом месяце {name} написал в чате {msg_count:,} {decl_of_num(msg_count, self.msg_titles)}, скорость: {(msg_count/hours_from_mounth_begin()):.2f} с/ч PogChamp")
         
     @commands.cooldown(rate=1, per=300, bucket=commands.Bucket.channel)
     @commands.command(name='всегонасрано')
@@ -466,7 +466,7 @@ class twitch_bot(commands.Bot):
         print(f'Пользователь {user.name} вошел в чат {channel.name}')
         if channel.name == user.name:
             channel_user = await channel.user() #id отсутвует в User поэтому приходится запрашивать
-            await channel.send(f'Привет, мир! KonCha')
+            # await channel.send(f'Привет, мир! KonCha')
             print(f'Стример в чате {channel_user.name}')
             
     async def event_ready(self):

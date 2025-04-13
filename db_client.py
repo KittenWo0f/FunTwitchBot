@@ -174,7 +174,7 @@ class db_message_log_client():
                         AND	   m.channel_id = '%s'
                         GROUP BY ua.id
                         ORDER BY COUNT(m.author_id) DESC
-                        LIMIT 15
+                        LIMIT 10
                         """,
                         [channel_id])
             res = cur.fetchall()
