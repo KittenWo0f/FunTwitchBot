@@ -283,8 +283,77 @@ class twitch_bot(commands.Bot):
         else:
             random_chatter = random.choice(tuple(ctx.chatters)).name
             await ctx.reply(f'@{ctx.author.name} назвал лапочкой @{random_chatter} <3')
-        
+    
+    @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
+    @commands.command(name='последнийстрим', aliases=['laststream'])
+    async def last_stream(self, ctx: commands.Context, phrase: str | None):
+        """Команда для проверки, когда канал последний раз был в эфире."""
+        # Если канал не указан, используем текущий канал
+        channel_name = ctx.channel.name
+        if phrase and len(phrase):
+            channel_name = phrase
                 
+        # Сначала получаем информацию о канале, чтобы узнать ID стримера
+        headers = {
+            "Client-ID": CLIENT_ID,
+            "Authorization": f"Bearer {ACCESS_TOKEN}"
+        }
+        
+        # Получаем информацию о пользователе для получения ID стримера
+        user_url = f"https://api.twitch.tv/helix/users?login={channel_name}"
+        user_response = requests.get(user_url, headers=headers)
+        
+        if user_response.status_code != 200 or not user_response.json()["data"]:
+            await ctx.reply(f"Не удалось найти канал: {channel_name} NotLikeThis")
+            return
+        
+        broadcaster_id = user_response.json()["data"][0]["id"]
+        
+        # Получаем информацию о стриме для канала
+        streams_url = f"https://api.twitch.tv/helix/channels?broadcaster_id={broadcaster_id}"
+        streams_response = requests.get(streams_url, headers=headers)
+        
+        if streams_response.status_code != 200:
+            await ctx.reply(f"Ошибка при получении данных о стриме: {streams_response.text} NotLikeThis")
+            return
+        
+        # Получаем видео (прошлые трансляции), чтобы найти последний стрим
+        videos_url = f"https://api.twitch.tv/helix/videos?user_id={broadcaster_id}&type=archive&first=1"
+        videos_response = requests.get(videos_url, headers=headers)
+        
+        if videos_response.status_code != 200:
+            await ctx.reply(f"Ошибка при получении данных о видео: {videos_response.text} NotLikeThis")
+            return
+        
+        videos_data = videos_response.json()["data"]
+        
+        if not videos_data:
+            await ctx.reply(f"У {channel_name} нет недавних стримов или записи не сохраняются NotLikeThis")
+            return
+        
+        # Получаем самое свежее видео (стрим)
+        latest_stream = videos_data[0]
+        created_at = datetime.datetime.fromisoformat(latest_stream["created_at"].replace("Z", "+00:00"))
+        
+        # Форматируем разницу во времени
+        now = datetime.datetime.now(datetime.timezone.utc)
+        time_since = now - created_at
+        
+        days = time_since.days
+        hours, remainder = divmod(time_since.seconds, 3600)
+        minutes, _ = divmod(remainder, 60)
+        
+        if days > 0:
+            time_str = f"{days} дней, {hours} часов, {minutes} минут назад"
+        elif hours > 0:
+            time_str = f"{hours} часов, {minutes} минут назад"
+        else:
+            time_str = f"{minutes} минут назад"
+        
+        # Отправляем ответ
+        stream_title = latest_stream["title"]
+        await ctx.reply(f"Последний стрим на канале {channel_name} был {time_str}. Название: \"{stream_title}\" weAreWaiting")
+
     @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
     @commands.command(name='анек', aliases=['кринж'])
     async def anek(self, ctx: commands.Context):
