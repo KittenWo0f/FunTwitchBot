@@ -238,18 +238,16 @@ class twitch_bot(commands.Bot):
             await ctx.reply(f'Ogey дня сегодня {ogey_name}, можно только позавидовать этому чатеру EZ Clap')
         else:
             await ctx.reply(f'Ogey дня не определен PoroSad')
-        
+       
     #Команды под оффлайн чат 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='чмок')
-    async def chmok(self, ctx: commands.Context, *, phrase: str | None):
+    async def chmok(self, ctx: commands.Context, phrase: str | None):
         if await self.is_stream_online(ctx.channel):
             return
-        if len(ctx.chatters) == 0:
-            await ctx.reply('В этом чате некого чмокнуть PoroSad')
-        elif not phrase:
-            await ctx.reply(f'@{ctx.author.name} чмокнул @{random.choice(tuple(ctx.chatters)).name} 😘')
-        else:
+        if phrase:
+            phrase = ''.join(c for c in phrase if c.isprintable())
+        if phrase and len(phrase):
             if not is_valid_args(phrase):
                 await ctx.reply(f'Бана хочешь моего?')
             elif ctx.author.name in phrase.lower():
@@ -258,17 +256,20 @@ class twitch_bot(commands.Bot):
                 await ctx.reply(f'И тебе чмок 😘')
             else:
                 await ctx.reply(f'@{ctx.author.name} чмокнул {phrase} 😘')
+        elif len(ctx.chatters) == 0:
+            await ctx.reply('В этом чате некого чмокнуть PoroSad')
+        else:
+            random_chatter = random.choice(tuple(ctx.chatters)).name
+            await ctx.reply(f'@{ctx.author.name} чмокнул @{random_chatter} 😘')
                 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='лапочка')
-    async def lapochka(self, ctx: commands.Context, *, phrase: str | None):
+    async def lapochka(self, ctx: commands.Context, phrase: str | None):
         if await self.is_stream_online(ctx.channel):
             return
-        if len(ctx.chatters) == 0:
-            await ctx.reply('В этом чате пусто PoroSad')
-        elif not phrase:
-            await ctx.reply(f'@{ctx.author.name} назвал лапочкой @{random.choice(tuple(ctx.chatters)).name} <3')
-        else:
+        if phrase:
+            phrase = ''.join(c for c in phrase if c.isprintable())
+        if phrase and len(phrase):
             if not is_valid_args(phrase):
                 await ctx.reply(f'Бана хочешь моего?')
             elif ctx.author.name in phrase.lower():
@@ -276,7 +277,13 @@ class twitch_bot(commands.Bot):
             elif self.nick in phrase.lower():
                 await ctx.reply(f'Ой спасибо bleedPurple')
             else:
-                await ctx.reply(f'@{ctx.author.name} назвал лапочкой {phrase} <3')
+                await ctx.reply(f'@{ctx.author.name} назвал лапочкой {phrase} <3')    
+        elif len(ctx.chatters) == 0:
+            await ctx.reply('В этом чате пусто PoroSad')
+        else:
+            random_chatter = random.choice(tuple(ctx.chatters)).name
+            await ctx.reply(f'@{ctx.author.name} назвал лапочкой @{random_chatter} <3')
+        
                 
     @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
     @commands.command(name='анек', aliases=['кринж'])
