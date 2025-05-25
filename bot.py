@@ -182,40 +182,64 @@ class twitch_bot(commands.Bot):
     async def weather(self, ctx: commands.Context, *, phrase: str | None):
         # Дефолтный смайлик в конце сообщения
         smile = 'peepoPls'
-        direct_translate = {
-            'N' : 'С',
-            'W' : 'З',
-            'S' : 'Ю',
-            'E' : 'В'
+
+        def get_wind_direction(degrees):
+            """Конвертирует градусы в направление ветра"""
+            directions = ['С', 'ССВ', 'СВ', 'ВСВ', 'В', 'ВЮВ', 'ЮВ', 'ЮЮВ',
+                        'Ю', 'ЮЮЗ', 'ЮЗ', 'ЗЮЗ', 'З', 'ЗСЗ', 'СЗ', 'ССЗ']
+            index = round(degrees / 22.5) % 16
+            return directions[index]
+        
+        url = "http://api.openweathermap.org/data/2.5/weather"
+        
+        params = {
+            "q": phrase,
+            "appid": OPENWEATHER_API_KEY,
+            "units": "metric",
+            "lang": "ru"
         }
-        url = "https://weatherapi-com.p.rapidapi.com/current.json"
-        querystring = {"q":phrase,"lang":"ru"}
-        response = requests.get(url, headers=weather_headers, params=querystring)
-        if response.status_code < 400:
-            jsonR = response.json()
-            # Переводим нашу погоду в более float состояние
-            location_temp = jsonR["current"]["temp_c"]
-            if location_temp <= 0:
-                smile = "Coldge"
-            elif location_temp > 29: 
-                smile = "hell"
-            await ctx.reply(f'В {jsonR["location"]["name"]} на данный момент {jsonR["current"]["temp_c"]}°C. \
-                            {jsonR["current"]["condition"]["text"]}. \
-                            Ветер {replace_chars(jsonR["current"]["wind_dir"], direct_translate)} {jsonR["current"]["wind_kph"] * 1000 / 3600:.2f} м/с. \
-                            {smile}')
-        else:
-            await ctx.reply(f'Не удалось выполнить запрос погоды PoroSad')
+        
+        try:
+            response = requests.get(url, params=params, timeout=10)
             
-    @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
-    @commands.command(name='время', aliases=['time'])
-    async def time(self, ctx: commands.Context, *, phrase: str | None):
-        if not phrase:
-            return
-        time = await get_current_time_in_city(phrase)
-        if time:
-            await ctx.reply(f'В {phrase} сейчас {time} MadgeTime')
-        else:
-            await ctx.reply(f'Не удалось узнать время в указаном месте PoroSad')
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Извлекаем данные
+                city_name = data["name"]
+                country = data["sys"]["country"]
+                temp = data["main"]["temp"]
+                description = data["weather"][0]["description"]
+                wind_speed = data["wind"]["speed"]  # м/с
+                wind_deg = data["wind"].get("deg", 0)
+                
+                # Определяем смайлик по температуре
+                if temp <= 0:
+                    smile = "Coldge"
+                elif temp > 29:
+                    smile = "hell"
+                
+                # Получаем направление ветра
+                wind_dir = get_wind_direction(wind_deg)
+                
+                await ctx.reply(f'В {city_name} ({country}) на данный момент {temp:.1f}°C. '
+                            f'{description.capitalize()}. '
+                            f'Ветер {wind_dir} {wind_speed:.1f} м/с. '
+                            f'{smile}')
+                            
+            elif response.status_code == 404:
+                await ctx.reply(f'Город "{phrase}" не найден PoroSad')
+            else:
+                await ctx.reply(f'Ошибка получения данных о погоде (код: {response.status_code}) PoroSad')
+                
+        except requests.exceptions.Timeout:
+            await ctx.reply('Превышено время ожидания ответа от сервера погоды PoroSad')
+        except requests.exceptions.RequestException:
+            await ctx.reply('Не удалось выполнить запрос погоды PoroSad')
+        except KeyError as e:
+            await ctx.reply(f'Ошибка обработки данных погоды PoroSad')
+        except Exception as e:
+            await ctx.reply('Произошла неожиданная ошибка при получении погоды PoroSad')
     
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
     @commands.command(name='курс')

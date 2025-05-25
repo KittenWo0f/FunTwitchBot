@@ -48,7 +48,4 @@ donats = {
 white_list = [] 
 
 # Запрос погоды
-weather_headers = {
-	"X-RapidAPI-Key": "",
-	"X-RapidAPI-Host": "weatherapi-com.p.rapidapi.com"
-}
+OPENWEATHER_API_KEY = ''
