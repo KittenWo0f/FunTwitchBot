@@ -114,6 +114,12 @@ class twitch_bot(commands.Bot):
         msg = memes.get(ctx.channel.name)
         if(not msg == None):
             await ctx.reply(msg)
+            
+    @commands.command(name='стим', aliases=['steam', 'игры'])
+    async def steam(self, ctx: commands.Context):
+        msg = steams.get(ctx.channel.name)
+        if(not msg == None):
+            await ctx.reply(msg)
     
     @commands.command(name='смайлы', aliases=['7tv', 'smiles', 'emoji', 'смайлики', 'эмоуты'])
     async def SpecialSmiles(self, ctx: commands.Context):
@@ -240,6 +246,17 @@ class twitch_bot(commands.Bot):
             await ctx.reply(f'Ошибка обработки данных погоды PoroSad')
         except Exception as e:
             await ctx.reply('Произошла неожиданная ошибка при получении погоды PoroSad')
+    
+    @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
+    @commands.command(name='время', aliases=['time'])
+    async def time(self, ctx: commands.Context, *, phrase: str | None):
+        if not phrase:
+            return
+        time = await get_current_time_in_city(phrase)
+        if time:
+            await ctx.reply(f'В {phrase} сейчас {time} MadgeTime')
+        else:
+            await ctx.reply(f'Не удалось узнать время в указаном месте PoroSad')
     
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
     @commands.command(name='курс')
