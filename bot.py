@@ -267,18 +267,6 @@ class twitch_bot(commands.Bot):
             await ctx.reply(f'1 USD = {1 / response.json()["rates"]["USD"]:.2f} RUB GAGAGA')
         else:
             await ctx.reply(f'Не удалось получить курс доллара PoroSad')
-    
-    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
-    @commands.command(name='ogeyofday')
-    async def ogeyofday(self, ctx: commands.Context):
-        if ctx.channel.name not in OGEY_OF_DAY_CHANNELS:
-            return
-        channel_user = await ctx.channel.user()
-        ogey_name = self.db_log_client.get_ogey(channel_user.id)
-        if ogey_name != None:
-            await ctx.reply(f'Ogey дня сегодня {ogey_name}, можно только позавидовать этому чатеру EZ Clap')
-        else:
-            await ctx.reply(f'Ogey дня не определен PoroSad')
        
     #Команды под оффлайн чат 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
@@ -453,9 +441,21 @@ class twitch_bot(commands.Bot):
         msg = msg[:-1]
         msg = msg + ' PogChamp'
         await ctx.reply(msg)
-        
+    
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
+    @commands.command(name='ogeyofday', aliases=['огейдня', 'ogeyoftheday'])
+    async def ogeyofday(self, ctx: commands.Context):
+        if ctx.channel.name not in OGEY_OF_DAY_CHANNELS:
+            return
+        channel_user = await ctx.channel.user()
+        ogey_name = self.db_log_client.get_ogey(channel_user.id)
+        if ogey_name != None:
+            await ctx.reply(f'Ogey дня сегодня {ogey_name}, можно только позавидовать этому чатеру EZ Clap')
+        else:
+            await ctx.reply(f'Ogey дня не определен PoroSad')
+    
     @commands.cooldown(rate=1, per=600, bucket=commands.Bucket.channel)
-    @commands.command(name='ogeysofmonth', aliases=['огеимесяца'])
+    @commands.command(name='ogeysofmonth', aliases=['огеимесяца', 'ogeysofthemonth'])
     async def ogeysofmonth(self, ctx: commands.Context):
         channel_user = await ctx.channel.user()
         top_ogeys = self.db_log_client.get_top_of_month_ogey(channel_user.id)
