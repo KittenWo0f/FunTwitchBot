@@ -398,7 +398,7 @@ class twitch_bot(commands.Bot):
     @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
     @commands.command(name='анек', aliases=['кринж'])
     async def anek(self, ctx: commands.Context):
-        await ctx.reply(get_rand_anek())
+        await ctx.reply(f'Зацените прикол: "{get_rand_anek()}". Классно, да?')
         
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
     @commands.command(name='факт', aliases=['fact'])
