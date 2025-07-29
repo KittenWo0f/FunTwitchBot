@@ -40,7 +40,8 @@ class telegram_admin_notifier:
         self,
         file_path: str,
         caption: Optional[str] = None,
-        file_type: str = "document"
+        file_type: str = "document",
+        timeout: int = 600
     ) -> bool:
         """
         Асинхронно отправляет файл.
@@ -48,12 +49,13 @@ class telegram_admin_notifier:
         :param file_path: Путь к файлу
         :param caption: Подпись к файлу
         :param file_type: "document", "photo", "audio", "video"
+        :param timeout: Таймаут отправки в секундах (по умолчанию 30)
         :return: True, если успешно, иначе False
         """
         if not os.path.exists(file_path):
             self.logger.error(f"Файл не найден: {file_path}")
             return False
-
+        
         try:
             with open(file_path, 'rb') as file:
                 input_file = InputFile(file)
@@ -62,25 +64,29 @@ class telegram_admin_notifier:
                     await self.bot.send_photo(
                         chat_id=self.admin_chat_id,
                         photo=input_file,
-                        caption=caption
+                        caption=caption,
+                        write_timeout=timeout
                     )
                 elif file_type == "audio":
                     await self.bot.send_audio(
                         chat_id=self.admin_chat_id,
                         audio=input_file,
-                        caption=caption
+                        caption=caption,
+                        write_timeout=timeout
                     )
                 elif file_type == "video":
                     await self.bot.send_video(
                         chat_id=self.admin_chat_id,
                         video=input_file,
-                        caption=caption
+                        caption=caption,
+                        write_timeout=timeout
                     )
                 else:  # document (по умолчанию)
                     await self.bot.send_document(
                         chat_id=self.admin_chat_id,
                         document=input_file,
-                        caption=caption
+                        caption=caption,
+                        write_timeout=timeout
                     )
             return True
         except (TelegramError, IOError) as e:
