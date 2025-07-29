@@ -454,6 +454,36 @@ class twitch_bot(commands.Bot):
         msg = msg + ' PogChamp'
         await ctx.reply(msg)
         
+    @commands.cooldown(rate=1, per=600, bucket=commands.Bucket.channel)
+    @commands.command(name='ogeysofmonth', aliases=['огеимесяца'])
+    async def ogeysofmonth(self, ctx: commands.Context):
+        channel_user = await ctx.channel.user()
+        top_ogeys = self.db_log_client.get_top_of_month_ogey(channel_user.id)
+        if not top_ogeys:
+            await ctx.reply('Не найдены сообщения для топа огеев NotLikeThis')
+            return
+        msg = f'Топ Ogey месяца:'
+        for user_row in top_ogeys:
+            msg = f' {msg} {user_row[0]} ({format_with_apostrophe(user_row[1])}),'
+        msg = msg[:-1]
+        msg = msg + ' KappaPride'
+        await ctx.reply(msg)
+        
+    @commands.cooldown(rate=1, per=600, bucket=commands.Bucket.channel)
+    @commands.command(name='topogeys', aliases=['топогеев'])
+    async def ogeystop(self, ctx: commands.Context):
+        channel_user = await ctx.channel.user()
+        top_ogeys = self.db_log_client.get_top_ogeys(channel_user.id)
+        if not top_ogeys:
+            await ctx.reply('Не найдены сообщения для топа огеев NotLikeThis')
+            return
+        msg = f'Топ Ogey за всё время:'
+        for user_row in top_ogeys:
+            msg = f' {msg} {user_row[0]} ({format_with_apostrophe(user_row[1])}),'
+        msg = msg[:-1]
+        msg = msg + ' KappaPride'
+        await ctx.reply(msg)
+        
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.user)
     @commands.command(name='скольконасрал')
     async def skolkonasral(self, ctx: commands.Context, phrase: str | None):

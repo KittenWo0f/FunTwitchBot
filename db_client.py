@@ -132,16 +132,13 @@ class db_message_log_client():
         try:
             cur = self._conn.cursor()
             cur.execute("""
-                        INSERT INTO ogeyofday (channel_id, ogey_id, timestamp) 
-                        VALUES (%s, %s, now())
-                        ON CONFLICT (channel_id) DO UPDATE 
-                        SET ogey_id = %s,
-                            timestamp = now();
+                        INSERT INTO ogeyofday_history  (id, channel_id, date) 
+                        VALUES ('%s', '%s', now())
                         """,
-                        (channel_id, ogey_id, ogey_id))
+                        (ogey_id, channel_id))
             self._conn.commit()
         except Exception as e:
-            print(f'Failed UpdateOgey in db: {e}.')
+            print(f'Failed UpdateOgey in db (ogeyofday): {e}.')
             return False
         return True
         
@@ -150,9 +147,11 @@ class db_message_log_client():
         try:
             cur = self._conn.cursor()
             cur.execute("""
-                        SELECT u.name FROM ogeyofday AS o
-                        JOIN users AS u ON u.id = o.ogey_id
-                        WHERE o.channel_id = '%s'
+                        SELECT u.name FROM ogeyofday_history AS oh
+                        JOIN users AS u ON u.id = oh.id
+                        WHERE oh.channel_id = %s
+                        ORDER BY date DESC
+                        LIMIT 1;
                         """,
                         [channel_id])
             res = cur.fetchall()
@@ -160,6 +159,48 @@ class db_message_log_client():
                 return res[0][0]
         except Exception as e:
             print(f'Failed GetOgey in db: {e}.')
+            return None
+        
+    def get_top_of_month_ogey(self, channel_id):
+        self._check_connection()
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        SELECT u.name, COUNT(*) FROM ogeyofday_history AS oh
+                        JOIN users AS u ON u.id = oh.id
+                        WHERE  oh.date >= date_trunc('month', now())
+                        AND    oh.date <  date_trunc('day'  , now()) + interval '1 day'
+                        AND	   oh.channel_id = '%s'
+                        GROUP BY u.name
+                        ORDER BY COUNT(u.name) DESC
+                        LIMIT 10;
+                        """,
+                        [channel_id])
+            res = cur.fetchall()
+            if res:
+                return res
+        except Exception as e:
+            print(f'Failed get top of month ogeys in db: {e}.')
+            return None
+    
+    def get_top_ogeys(self, channel_id):
+        self._check_connection()
+        try:
+            cur = self._conn.cursor()
+            cur.execute("""
+                        SELECT u.name, COUNT(*) FROM ogeyofday_history AS oh
+                        JOIN users AS u ON u.id = oh.id
+                        WHERE oh.channel_id = '%s'
+                        GROUP BY u.name
+                        ORDER BY COUNT(u.name) DESC
+                        LIMIT 10;
+                        """,
+                        [channel_id])
+            res = cur.fetchall()
+            if res:
+                return res
+        except Exception as e:
+            print(f'Failed get top of ogey in db: {e}.')
             return None
         
     def get_top_of_month_users(self, channel_id):
