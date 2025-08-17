@@ -20,7 +20,7 @@ from gpiozero import CPUTemperature
 
 class twitch_bot(commands.Bot):
 
-    name = str()
+    # name will be set in __init__
     db_log_client = db_message_log_client(DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD)
     telegram_notifier = telegram_admin_notifier(TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID)
     msg_titles = ['сообщение', 'сообщения', 'сообщений']
@@ -29,11 +29,6 @@ class twitch_bot(commands.Bot):
     def __init__(self, name):
         super().__init__(token=ACCESS_TOKEN, prefix=PREFIX, initial_channels=INITIAL_CHANNELS)
         self.db_log_client.connect()
-
-    #Событие готовности бота
-    async def event_ready(self):
-        print(f'Вошел как | {self.nick}')
-        print(f'Id пользователя | {self.user_id}')
 
     #Обработка сообщений
     async def event_message(self, message):        
@@ -118,6 +113,12 @@ class twitch_bot(commands.Bot):
     @commands.command(name='стим', aliases=['steam', 'игры'])
     async def steam(self, ctx: commands.Context):
         msg = steams.get(ctx.channel.name)
+        if(not msg == None):
+            await ctx.reply(msg)
+            
+    @commands.command(name='записи', aliases=['vods'])
+    async def vods(self, ctx: commands.Context):
+        msg = vods.get(ctx.channel.name)
         if(not msg == None):
             await ctx.reply(msg)
     
@@ -606,7 +607,7 @@ class twitch_bot(commands.Bot):
             if path.exists(backup_path):
                 remove(backup_path)
         else:
-            await self.telegram_admin_notifier.send_message(f"{message}")
+            await self.telegram_notifier.send_message(f"{message}")
     
     #Команды для белого списка 
     @commands.command(name='горячесть', aliases=['температура', 'темп', 'temp'])
@@ -630,6 +631,9 @@ class twitch_bot(commands.Bot):
             print(f'Стример в чате {channel_user.name}')
             
     async def event_ready(self):
+        #Вывод информации о боте
+        print(f'Вошел как | {self.nick}')
+        print(f'Id пользователя | {self.user_id}')
         #Старт рутин
         self.ogey_of_day_routine.start()
         self.backup_db_routine.start()
