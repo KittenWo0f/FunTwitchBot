@@ -37,7 +37,7 @@ class twitch_bot(commands.Bot):
             author_name = self.nick
         else:
             author_id = message.author.id 
-            author_name = message.author.name
+            author_name = message.author.display_name
         print(f'({message.channel.name}){author_name}:{message.content}')
         channel_user = await message.channel.user(False)
         self.db_log_client.insert_message(message.content, author_id, author_name, channel_user)
@@ -424,8 +424,8 @@ class twitch_bot(commands.Bot):
             return
         msg = f'Привет,'
         for user_row in active_users:
-            msg = f' {msg} @{user_row[0]},'
-        msg = msg + ' KonCha'
+            msg = f' {msg} @{user_row[0]} '
+        msg = msg + ' hi'
         await ctx.reply(msg)
         
     @commands.cooldown(rate=1, per=600, bucket=commands.Bucket.channel)
@@ -438,7 +438,7 @@ class twitch_bot(commands.Bot):
             return
         msg = f'Топ месяца по сообщениям:'
         for user_row in top_users:
-            msg = f' {msg} {user_row[0]} ({format_with_apostrophe(user_row[1])}, {(user_row[1]/hours_from_mounth_begin()):.2f} с/ч),'
+            msg = f' {msg} {user_row[0]} ({format_with_apostrophe(user_row[1])}),'
         msg = msg[:-1]
         msg = msg + ' PogChamp'
         await ctx.reply(msg)
