@@ -71,7 +71,7 @@ class db_message_log_client():
         try:
             cur = self._conn.cursor()
             cur.execute("""
-                        SELECT u.name
+                        SELECT u.display_name
                         FROM messages AS m
                         JOIN users AS u ON u.id=m.author_id
                         WHERE m.timestamp >= date_trunc('second', now()) - INTERVAL '43200 second'
@@ -147,7 +147,7 @@ class db_message_log_client():
         try:
             cur = self._conn.cursor()
             cur.execute("""
-                        SELECT u.name FROM ogeyofday_history AS oh
+                        SELECT u.display_name FROM ogeyofday_history AS oh
                         JOIN users AS u ON u.id = oh.id
                         WHERE oh.channel_id = %s
                         ORDER BY date DESC
@@ -166,13 +166,13 @@ class db_message_log_client():
         try:
             cur = self._conn.cursor()
             cur.execute("""
-                        SELECT u.name, COUNT(*) FROM ogeyofday_history AS oh
+                        SELECT u.display_name, COUNT(*) FROM ogeyofday_history AS oh
                         JOIN users AS u ON u.id = oh.id
                         WHERE  oh.date >= date_trunc('month', now())
                         AND    oh.date <  date_trunc('day'  , now()) + interval '1 day'
                         AND	   oh.channel_id = '%s'
-                        GROUP BY u.name
-                        ORDER BY COUNT(u.name) DESC
+                        GROUP BY u.id
+                        ORDER BY COUNT(u.id) DESC
                         LIMIT 10;
                         """,
                         [channel_id])
@@ -188,11 +188,11 @@ class db_message_log_client():
         try:
             cur = self._conn.cursor()
             cur.execute("""
-                        SELECT u.name, COUNT(*) FROM ogeyofday_history AS oh
+                        SELECT u.display_name, COUNT(*) FROM ogeyofday_history AS oh
                         JOIN users AS u ON u.id = oh.id
                         WHERE oh.channel_id = '%s'
-                        GROUP BY u.name
-                        ORDER BY COUNT(u.name) DESC
+                        GROUP BY u.id
+                        ORDER BY COUNT(u.id) DESC
                         LIMIT 10;
                         """,
                         [channel_id])
@@ -208,7 +208,7 @@ class db_message_log_client():
         try:
             cur = self._conn.cursor()
             cur.execute("""
-                        SELECT ua.name, COUNT(*) FROM messages AS m
+                        SELECT ua.display_name, COUNT(*) FROM messages AS m
                         JOIN users AS ua ON ua.id = m.author_id
                         WHERE  m.timestamp >= date_trunc('month', now())
                         AND    m.timestamp <  date_trunc('day'  , now()) + interval '1 day'
@@ -235,7 +235,7 @@ class db_message_log_client():
                         WHERE  m.timestamp >= date_trunc('month', now())
                         AND    m.timestamp <  date_trunc('day'  , now()) + interval '1 day'
                         AND	   m.channel_id = %s
-                        AND    ua.name = %s
+                        AND    ua.display_name = %s
                         """,
                         (channel_id, user_name))
             res = cur.fetchall()
@@ -307,7 +307,7 @@ class db_message_log_client():
         try:
             cur = self._conn.cursor()
             cur.execute("""
-                        SELECT u.name, den.den_count 
+                        SELECT u.display_name, den.den_count 
                         FROM users AS u 
                         JOIN denunciations AS den ON den.user_id = u.id
                         ORDER BY den.den_count DESC
@@ -321,11 +321,12 @@ class db_message_log_client():
             return None
         
     
-    def _check_user_exist(self, id, name):
+    def _check_user_exist(self, id, display_name):
         try:
             #Добавляю пользователя если его нет в таблицу пользователей
             #TODO При подключении считывать таблицу пользователей в память и искать Id в памяти и потом пытаться записать пользователя в БД
-            self._conn.cursor().execute("INSERT INTO users (id, name) VALUES (%s, %s) ON CONFLICT (id) DO UPDATE SET name = %s WHERE users.name != %s", (id, name, name, name))
+            name = display_name.lower()
+            self._conn.cursor().execute("INSERT INTO users (id, name, display_name) VALUES (%s, %s, %s) ON CONFLICT (id) DO UPDATE SET name = %s WHERE users.name != %s", (id, name, display_name, name, name))
             self._conn.commit()
         except Exception as e:
             print(f'Failed check user in db: {e}.')

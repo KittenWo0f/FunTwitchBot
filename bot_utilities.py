@@ -1,5 +1,6 @@
 from random import choice as randChoise
 from urllib.parse import urlparse
+from bot_settings import OPENROUTER_API_KEY
 from regex_tests import *
 import datetime
 # Для парсера
@@ -46,12 +47,8 @@ def get_rand_anek() -> str:
     soup = BeautifulSoup(req.text, "html.parser")
     aneksHTML = soup.find_all('div', class_ = 'tecst')
     
-    fullAnek = ''
-    while True:
-        aneksList = random.choice(tuple(aneksHTML)).find_all(text = True, recursive=False)
-        fullAnek = ' '.join(aneksList).strip()
-        if len(fullAnek) < 250:
-            break
+    aneksList = random.choice(tuple(aneksHTML)).find_all(text = True, recursive=False)
+    fullAnek = ' '.join(aneksList).strip()
     return fullAnek
 
 def get_today_holiday() -> str:
@@ -213,8 +210,12 @@ async def fetch_location(city_name: str, session: aiohttp.ClientSession) -> tupl
         'limit': 1
     }
     
-    async with session.get(url, params=params) as response:
-        data = await response.json()
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
+    }
+
+    async with session.get(url, params=params, headers=headers) as response:
+        data = await response.json() # Теперь сервер должен отвечать JSON
         if not data:
             raise ValueError("Город не найден")
         return float(data[0]['lat']), float(data[0]['lon'])
@@ -249,3 +250,61 @@ def format_with_apostrophe(number):
             result.append("'")
         result.append(char)
     return "".join(reversed(result))
+
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+async def get_ai_fact(topic: str) -> str:
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": "openai/gpt-oss-120b:free",
+        "messages": [
+            {
+                "role": "user",
+                "content": (
+                    f"Придумай абсурдный, смешной псевдонаучный факт "
+                    f"про «{topic}». Один абзац, без вступлений, без кавычек, на русском. Желательно уложиться в 150 символов"
+                ),
+            }
+        ],
+        "max_tokens": 300,
+        "temperature": 0.7,
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(OPENROUTER_URL, headers=headers, json=payload) as resp:
+            data = await resp.json()
+            if resp.status != 200:
+                # выводим реальную ошибку для отладки
+                print(f"OpenRouter error: {data}")
+                return f"Нейросеть сломалась (статус {resp.status})"
+            return data["choices"][0]["message"]["content"].strip()
+        
+async def get_ai_anek(topic: str) -> str:
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": "openai/gpt-oss-120b:free",
+        "messages": [
+            {
+                "role": "user",
+                "content": (
+                    f"Придумай анекдот про «{topic}». Один абзац, без вступлений, без кавычек, на русском. Желательно уложиться в 200 символов"
+                ),
+            }
+        ],
+        "max_tokens": 300,
+        "temperature": 0.7,
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(OPENROUTER_URL, headers=headers, json=payload) as resp:
+            data = await resp.json()
+            if resp.status != 200:
+                # выводим реальную ошибку для отладки
+                print(f"OpenRouter error: {data}")
+                return f"Нейросеть сломалась (статус {resp.status})"
+            return data["choices"][0]["message"]["content"].strip()

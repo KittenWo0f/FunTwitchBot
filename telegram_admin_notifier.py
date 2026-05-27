@@ -65,28 +65,40 @@ class telegram_admin_notifier:
                         chat_id=self.admin_chat_id,
                         photo=input_file,
                         caption=caption,
-                        write_timeout=timeout
+                        read_timeout=timeout,
+                        write_timeout=timeout,
+                        connect_timeout=timeout,
+                        pool_timeout=timeout
                     )
                 elif file_type == "audio":
                     await self.bot.send_audio(
                         chat_id=self.admin_chat_id,
                         audio=input_file,
                         caption=caption,
-                        write_timeout=timeout
+                        read_timeout=timeout,
+                        write_timeout=timeout,
+                        connect_timeout=timeout,
+                        pool_timeout=timeout
                     )
                 elif file_type == "video":
                     await self.bot.send_video(
                         chat_id=self.admin_chat_id,
                         video=input_file,
                         caption=caption,
-                        write_timeout=timeout
+                        read_timeout=timeout,
+                        write_timeout=timeout,
+                        connect_timeout=timeout,
+                        pool_timeout=timeout
                     )
                 else:  # document (по умолчанию)
                     await self.bot.send_document(
                         chat_id=self.admin_chat_id,
                         document=input_file,
                         caption=caption,
-                        write_timeout=timeout
+                        read_timeout=timeout,
+                        write_timeout=timeout,
+                        connect_timeout=timeout,
+                        pool_timeout=timeout
                     )
             return True
         except (TelegramError, IOError) as e:

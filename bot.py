@@ -34,7 +34,7 @@ class twitch_bot(commands.Bot):
     async def event_message(self, message):        
         if message.echo:
             author_id = self.user_id 
-            author_name = self.nick
+            author_name = self.bot_display_name
         else:
             author_id = message.author.id 
             author_name = message.author.display_name
@@ -143,7 +143,7 @@ class twitch_bot(commands.Bot):
     
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.user)
     @commands.command(name='lastseen', aliases=['когдавидели'])
-    async def last_seen(self, ctx: commands.Context, phrase: str | None):
+    async def last_seen(self, ctx: commands.Context, phrase: str = None):
         try:
             channel_user = await ctx.channel.user()
             if phrase:
@@ -186,7 +186,7 @@ class twitch_bot(commands.Bot):
       
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.member)
     @commands.command(name='погода', aliases=['weather'])
-    async def weather(self, ctx: commands.Context, *, phrase: str | None):
+    async def weather(self, ctx: commands.Context, *, phrase: str = None):
         # Дефолтный смайлик в конце сообщения
         smile = 'peepoPls'
 
@@ -214,7 +214,6 @@ class twitch_bot(commands.Bot):
                 
                 # Извлекаем данные
                 city_name = data["name"]
-                country = data["sys"]["country"]
                 temp = data["main"]["temp"]
                 description = data["weather"][0]["description"]
                 wind_speed = data["wind"]["speed"]  # м/с
@@ -229,7 +228,7 @@ class twitch_bot(commands.Bot):
                 # Получаем направление ветра
                 wind_dir = get_wind_direction(wind_deg)
                 
-                await ctx.reply(f'В {city_name} ({country}) на данный момент {temp:.1f}°C. '
+                await ctx.reply(f'В {city_name} на данный момент {temp:.1f}°C. '
                             f'{description.capitalize()}. '
                             f'Ветер {wind_dir} {wind_speed:.1f} м/с. '
                             f'{smile}')
@@ -250,7 +249,7 @@ class twitch_bot(commands.Bot):
     
     @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
     @commands.command(name='время', aliases=['time'])
-    async def time(self, ctx: commands.Context, *, phrase: str | None):
+    async def time(self, ctx: commands.Context, *, phrase: str = None):
         if not phrase:
             return
         time = await get_current_time_in_city(phrase)
@@ -272,7 +271,7 @@ class twitch_bot(commands.Bot):
     #Команды под оффлайн чат 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
     @commands.command(name='чмок')
-    async def chmok(self, ctx: commands.Context, phrase: str | None):
+    async def chmok(self, ctx: commands.Context, phrase: str = None):
         if await self.is_stream_online(ctx.channel):
             return
         if phrase:
@@ -293,8 +292,8 @@ class twitch_bot(commands.Bot):
             await ctx.reply(f'@{ctx.author.name} чмокнул @{random_chatter} 😘')
                 
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.member)
-    @commands.command(name='лапочка')
-    async def lapochka(self, ctx: commands.Context, phrase: str | None):
+    @commands.command(name='кусь')
+    async def kus(self, ctx: commands.Context, phrase: str = None):
         if await self.is_stream_online(ctx.channel):
             return
         if phrase:
@@ -303,20 +302,20 @@ class twitch_bot(commands.Bot):
             if not is_valid_args(phrase):
                 await ctx.reply(f'Бана хочешь моего?')
             elif ctx.author.name in phrase.lower():
-                await ctx.reply(f'@{ctx.author.name} высокая самооценка это хорошо SeemsGood')
+                await ctx.reply(f'@{ctx.author.name} странный ты eeeh')
             elif self.nick in phrase.lower():
-                await ctx.reply(f'Ой спасибо bleedPurple')
+                await ctx.reply(f'Stare')
             else:
-                await ctx.reply(f'@{ctx.author.name} назвал лапочкой {phrase} <3')    
+                await ctx.reply(f'@{ctx.author.name} куснул {phrase} peepoGiggles')    
         elif len(ctx.chatters) == 0:
             await ctx.reply('В этом чате пусто PoroSad')
         else:
             random_chatter = random.choice(tuple(ctx.chatters)).name
-            await ctx.reply(f'@{ctx.author.name} назвал лапочкой @{random_chatter} <3')
+            await ctx.reply(f'@{ctx.author.name} куснул @{random_chatter} peepoGiggles')
     
     @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
     @commands.command(name='последнийстрим', aliases=['laststream'])
-    async def last_stream(self, ctx: commands.Context, phrase: str | None):
+    async def last_stream(self, ctx: commands.Context, phrase: str = None):
         """Команда для проверки, когда канал последний раз был в эфире."""
         # Если канал не указан, используем текущий канал
         channel_name = ctx.channel.name
@@ -386,19 +385,39 @@ class twitch_bot(commands.Bot):
 
     @commands.cooldown(rate=1, per=60, bucket=commands.Bucket.channel)
     @commands.command(name='анек', aliases=['кринж'])
-    async def anek(self, ctx: commands.Context):
-        await ctx.reply(f'Зацените прикол: "{get_rand_anek()}". Классно, да?')
-        
+    async def anek(self, ctx: commands.Context, *, phrase: str = None):
+        if phrase:
+            try:
+                ai_anek = await get_ai_anek(phrase)
+                full_text = f'Зацените прикол: "{ai_anek}". Классно, да?'
+            except Exception as e:
+                full_text = f"Нейросеть умерла: {e} FeelsBadMan"
+        else:
+            full_text = f'Зацените прикол: "{get_rand_anek()}". Классно, да?'
+
+        for chunk in split_string_by_words(full_text):
+            await ctx.reply(chunk)
+            await asyncio.sleep(2)
+
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
     @commands.command(name='факт', aliases=['fact'])
-    async def fact(self, ctx: commands.Context):
-        for chunk in split_string_by_words(get_rand_fact()):
+    async def fact(self, ctx: commands.Context, *, phrase: str = None):
+        if phrase:
+            try:
+                ai_text = await get_ai_fact(phrase)
+                full_text = f"{ai_text} rockFact"
+            except Exception as e:
+                full_text = f"Нейросеть умерла: {e} rockFact"
+        else:
+            full_text = f"{get_rand_fact()} rockFact"
+
+        for chunk in split_string_by_words(full_text):
             await ctx.reply(chunk)
             await asyncio.sleep(2)
     
     @commands.cooldown(rate=1, per=180, bucket=commands.Bucket.channel)
     @commands.command(name='гороскоп', aliases=['prediction'])
-    async def prediction(self, ctx: commands.Context, phrase: str | None):
+    async def prediction(self, ctx: commands.Context, phrase: str = None):
         prediction = get_prediction(phrase)
         if prediction:
             for chunk in split_string_by_words(prediction):
@@ -487,7 +506,7 @@ class twitch_bot(commands.Bot):
         
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.user)
     @commands.command(name='скольконасрал')
-    async def skolkonasral(self, ctx: commands.Context, phrase: str | None):
+    async def skolkonasral(self, ctx: commands.Context, phrase: str = None):
         if await self.is_stream_online(ctx.channel):
             return
         channel_user = await ctx.channel.user()
@@ -532,19 +551,102 @@ class twitch_bot(commands.Bot):
         
     @commands.cooldown(rate=1, per=600, bucket=commands.Bucket.user)
     @commands.command(name='сосиска')
-    async def sousage(self, ctx: commands.Context):
-        length = random.randint(0, 30)
-        emote = get_val_by_max_val({5: "PoroSad", 
-                                    10: "Stare",
-                                    15: "Hmm",
-                                    20: "Hmmege",
-                                    25: "SHTO",
-                                    30: "EZ"}, length)
-        await ctx.reply(f"@{ctx.author.name} имеет сосиску {length} см. {emote}")
+    async def sausage(self, ctx: commands.Context):
+        length = random.randint(0, 37)
+        width = random.randint(1, 13)
+        
+        # === ФОРМЫ (расширил сильно) ===
+        shapes = [
+            "идеально прямая", "прямая как стрела", "слегка изогнутая", 
+            "элегантно изогнутая", "подозрительно кривоватая", "спиралевидная",
+            "в форме банана", "волнообразная", "с характерным изгибом",
+            "как вопросительный знак", "с шишечкой на конце", 
+            "с узелком посередине", "двойная (сиамские близнецы)",
+            "сердцеобразная", "как будто пережила тяжёлую жизнь",
+            "абсолютно асимметричная", "с лёгкой венозностью",
+            "в форме латинской S", "почти идеальная", "в форме бумеранга",
+            "крючковатая", "с небольшим горбиком", "совершенно ровная",
+            "в форме огурца", "закрученная в штопор", "с тремя изгибами",
+            "каплевидная", "как сабля", "с лёгкой припухлостью",
+            "гармошкой", "в форме молнии", "классическая сосисочная"
+        ]
+
+        # === СОСТОЯНИЯ (ещё больше) ===
+        states = [
+            "в полной боевой готовности", "отдыхает после трудов",
+            "немного растеряна", "выглядит максимально уверенно",
+            "сомневается в себе", "переживает не лучшие времена",
+            "полна энтузиазма", "в пике своей формы", "скромно прячется",
+            "доминирует в помещении", "игриво подмигивает",
+            "философски задумчива", "гиперактивная", 
+            "устала после вчерашнего", "готовится к великим делам",
+            "в лёгкой депрессии", "максимально довольная жизнью",
+            "нервно пульсирует", "спокойна и величественна",
+            "заряженная на 100%", "сонная и вялая", "агрессивно стоит",
+            "стеснительно прячется", "гордая и независимая",
+            "в творческом кризисе", "в состоянии нирваны",
+            "готовa к труду и обороне", "просто существует",
+            "в боевом настроении", "расслабленная и счастливая"
+        ]
+
+        # === РЕДКОСТЬ ===
+        rarity = get_val_by_max_val({
+            3:  "трагического уровня",
+            7:  "обычной редкости",
+            12: "неплохая",
+            17: "редкая",
+            22: "эпическая",
+            27: "мифическая",
+            32: "божественного уровня",
+            35: "ЛЕГЕНДАРНОГО КАЧЕСТВА",
+            37: "БОЖЕСТВЕННАЯ"
+        }, length)
+
+        # === ЭМОДЗИ ===
+        emote = get_val_by_max_val({
+            3:  "PoroSad",
+            8:  "Stare",
+            13: "Hmm",
+            18: "Hmmege",
+            23: "SHTO",
+            28: "EZ",
+            32: "Pog",
+            35: "POGCHAMP",
+            37: "HYPERPOG"
+        }, length)
+
+        shape = random.choice(shapes)
+        state = random.choice(states)
+
+        # Специальные сообщения
+        if length == 0:
+            await ctx.reply(f"@{ctx.author.name} имеет сосиску: "
+                            f"💀 Отсутствует (0 см)  📐 0 см\n"
+                            f"Это уже не сосиска, это философский вакуум...")
+            return
+
+        if length >= 34:
+            extra = "\n🌌 Это уже не сосиска. Это оружие массового поражения."
+        elif length >= 29:
+            extra = "\n🔥 Опасно мощная сосиска."
+        elif length >= 25:
+            extra = "\n💪 Внушает уважение."
+        else:
+            extra = ""
+
+        await ctx.reply(
+            f"@{ctx.author.name} имеет сосиску:\n"
+            f" {emote} Длина: {length} см\n"
+            f"📏 Ширина: {width} см\n"
+            f"🌀 Форма: {shape}\n"
+            f"✨ Редкость: {rarity}\n"
+            f"🧠 Состояние: {state}"
+            f"{extra}"
+        )
         
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.user)
     @commands.command(name='донос')
-    async def denunciation(self, ctx: commands.Context, *, phrase: str | None):
+    async def denunciation(self, ctx: commands.Context, *, phrase: str = None):
         if phrase:
             if not is_valid_args(phrase):
                 await ctx.reply(f'Бана хочешь моего?')
@@ -571,7 +673,7 @@ class twitch_bot(commands.Bot):
         
     @commands.cooldown(rate=1, per=10800, bucket=commands.Bucket.user)
     @commands.command(name='админу')
-    async def to_admin(self, ctx: commands.Context, *, phrase: str | None):
+    async def to_admin(self, ctx: commands.Context, *, phrase: str = None):
         if phrase:
             success = await self.telegram_notifier.send_message(f'''{ctx.author.name} ({ctx.channel.name}): {phrase}''')
             if success:
@@ -634,6 +736,14 @@ class twitch_bot(commands.Bot):
         #Вывод информации о боте
         print(f'Вошел как | {self.nick}')
         print(f'Id пользователя | {self.user_id}')
+        
+        # Получаем полную информацию о себе
+        users = await self.fetch_users([self.nick])
+        if users:
+            user = users[0]
+            self.bot_display_name = user.display_name
+            print(f"Display name бота: {self.bot_display_name}")
+        
         #Старт рутин
         self.ogey_of_day_routine.start()
         self.backup_db_routine.start()
