@@ -268,21 +268,19 @@ class db_message_log_client():
         self._check_connection()
         try:
             cur = self._conn.cursor()
-            cur.execute("""
-                        SELECT COUNT(*) FROM messages AS m
-                        WHERE m.channel_id = '%s'
-                        AND (m.message ILIKE '%%мален%%' OR 
-                            m.message ILIKE '%%маслени%%' OR 
-                            m.message ILIKE '%%мелани%%' OR
-                            m.message ILIKE '%%милани%%'
-                            )
-                        """,
-                        [channel_id])
-            res = cur.fetchall()
-            if res:
-                return res[0][0]
+            cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM messages AS m
+                WHERE m.channel_id = %s
+                AND m.message ~* 'мален|маслени|мелани|милани'
+                """,
+                (channel_id,),
+            )
+            row = cur.fetchone()
+            return row[0] if row else None
         except Exception as e:
-            print(f'Failed GetMaleniaInChannel {channel_id} in db: {e}.')
+            print(f"Failed GetMaleniaInChannel {channel_id} in db: {e}.")
             return None
         
     def add_denunciations_from_user(self, user_id):
@@ -319,7 +317,46 @@ class db_message_log_client():
         except Exception as e:
             print(f'Failed get top of month denunciations users in db: {e}.')
             return None
-        
+    
+    def get_word_count_by_user(
+        self,
+        channel_id: int,
+        user_name: str,
+        word: str
+    ) -> Optional[int]:
+        """
+        Подсчитывает суммарное число вхождений слова во всех сообщениях
+        пользователя в указанном канале.
+        Возвращает int при успехе, None при ошибке БД.
+        """
+        self._check_connection()
+        try:
+            cur = self._conn.cursor()
+            cur.execute(
+                """
+                SELECT COALESCE(
+                    SUM(
+                        (
+                            LENGTH(LOWER(m.message))
+                            - LENGTH(REPLACE(LOWER(m.message), LOWER(%s), ''))
+                        ) / LENGTH(%s)
+                    ),
+                    0
+                )
+                FROM messages AS m
+                JOIN users   AS u ON u.id = m.author_id
+                WHERE LOWER(u.name) = LOWER(%s)
+                AND m.channel_id  = %s
+                AND m.message IS NOT NULL
+                AND LENGTH(%s)    > 0
+                """,
+                (word, word, user_name, channel_id, word),
+            )
+            row = cur.fetchone()
+            return int(row[0]) if row else 0
+        except Exception as e:
+            print(f"Failed get_word_count_by_user in db: {e}.")
+            return None
     
     def _check_user_exist(self, id, display_name):
         try:

@@ -29,6 +29,7 @@ class twitch_bot(commands.Bot):
     def __init__(self, name):
         super().__init__(token=ACCESS_TOKEN, prefix=PREFIX, initial_channels=INITIAL_CHANNELS)
         self.db_log_client.connect()
+        self.disable_cmds_chanels: dict[str,bool] = {}
 
     #Обработка сообщений
     async def event_message(self, message):        
@@ -45,9 +46,30 @@ class twitch_bot(commands.Bot):
         if message.echo:
             return
         
+        
         if str(message.content).startswith(PREFIX):
+            
+            if message.content.startswith('!подъём') and message.author.name in white_list:
+                ctx = await self.get_context(message)
+                if self.disable_cmds_chanels.get(message.channel):
+                    self.disable_cmds_chanels[message.channel] = False
+                    await ctx.reply('Я проснулся AYAYASleepy')
+                else:
+                    await ctx.reply('Я и не спал roflanTanec')
+                return
+            
+            if self.disable_cmds_chanels.get(message.channel):
+                return
+            
+            if message.content.startswith('!отбой') and message.author.name in white_list:
+                self.disable_cmds_chanels[message.channel] = True
+                ctx = await self.get_context(message)
+                await ctx.reply('Я спать ppSleep')
+                return
+            
             await self.handle_commands(message)
             return
+        
         
         ctx = await self.get_context(message)
         
@@ -539,6 +561,63 @@ class twitch_bot(commands.Bot):
             await ctx.reply(f'Не удалось подсчитать упоминаний малений в этом чате NotLikeThis')
             return
         await ctx.reply(f"В этом чате вспомнили Малению {msg_count:,} раз MaleniaTime")
+    
+    @commands.cooldown(rate=1, per=20, bucket=commands.Bucket.channel)
+    @commands.command(name="подсчёт")
+    async def word_count(self, ctx: commands.Context) -> None:
+        """!подсчёт @имя_пользователя слово"""
+
+        # Разбиваем на токены, пропуская само название команды
+        parts = ctx.message.content.split()
+        args  = parts[1:]  # [0] — «!подсчёт»
+
+        # --- валидация количества аргументов ---
+        if len(args) < 2:
+            await ctx.reply(
+                "Неверный формат! Используй: !подсчёт @имя_пользователя слово"
+            )
+            return
+
+        username_arg, word, *_ = args  # лишние токены молча игнорируем
+
+        # --- валидация формата никнейма ---
+        if not username_arg.startswith("@"):
+            await ctx.reply(
+                "Неверный формат! Никнейм должен начинаться с «@». "
+                "Пример: !подсчёт @имя_пользователя слово"
+            )
+            return
+
+        username = username_arg[1:]  # убираем «@»
+
+        if not username:
+            await ctx.reply("Неверный формат! Укажи никнейм после «@».")
+            return
+
+        # --- валидация слова ---
+        if not word:
+            await ctx.reply("Неверный формат! Укажи слово для подсчёта.")
+            return
+
+        # --- запрос к БД ---
+        channel_user = await ctx.channel.user()
+        count = self.db_log_client.get_word_count_by_user(
+            channel_user.id, username, word
+        )
+
+        if count is None:
+            await ctx.reply("Не удалось подсчитать упоминания NotLikeThis")
+            return
+
+        if count == 0:
+            await ctx.reply(
+                f"Пользователь {username_arg} ни разу не написал «{word}» в этом чате."
+            )
+            return
+
+        await ctx.reply(
+            f"Пользователь {username_arg} написал «{word}» {count:,} раз(а) в этом чате."
+        )
         
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
     @commands.command(name='год', aliases=['year', 'прогресс'])
