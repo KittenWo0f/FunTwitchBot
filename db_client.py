@@ -5,6 +5,7 @@ import asyncio
 import os
 import datetime
 from typing import Optional, Tuple
+import re
 
 class db_message_log_client():
         
@@ -356,6 +357,256 @@ class db_message_log_client():
             return int(row[0]) if row else 0
         except Exception as e:
             print(f"Failed get_word_count_by_user in db: {e}.")
+            return None
+
+    def get_first_message(
+        self, channel_id: int, username: str
+    ) -> Optional[Tuple[str, datetime.datetime]]:
+        """Первое сообщение пользователя в канале."""
+        self._check_connection()
+        try:
+            cur = self._conn.cursor()
+            cur.execute(
+                """
+                SELECT m.message, m.timestamp
+                FROM   messages m
+                JOIN   users    u ON u.id = m.author_id
+                WHERE  LOWER(u.name) = LOWER(%s)
+                AND  m.channel_id  = %s
+                AND  m.message IS NOT NULL
+                ORDER  BY m.timestamp ASC
+                LIMIT  1
+                """,
+                (username, channel_id),
+            )
+            row = cur.fetchone()
+            return (row[0], row[1]) if row else None
+        except Exception as e:
+            print(f"Failed get_first_message: {e}.")
+            return None
+
+
+    def get_user_days_in_channel(self, channel_id: int, username: str) -> Optional[int]:
+        """Число дней с первого сообщения пользователя в канале."""
+        self._check_connection()
+        try:
+            cur = self._conn.cursor()
+            cur.execute(
+                """
+                SELECT EXTRACT(DAY FROM now() - MIN(m.timestamp))::int
+                FROM   messages m
+                JOIN   users    u ON u.id = m.author_id
+                WHERE  LOWER(u.name) = LOWER(%s)
+                AND  m.channel_id  = %s
+                """,
+                (username, channel_id),
+            )
+            row = cur.fetchone()
+            return row[0] if row and row[0] is not None else None
+        except Exception as e:
+            print(f"Failed get_user_days_in_channel: {e}.")
+            return None
+
+
+    def get_user_activity(
+        self, channel_id: int, username: str
+    ) -> Optional[Tuple[int, int]]:
+        """Число сообщений за 7 и 30 дней. Возвращает (cnt_7d, cnt_30d)."""
+        self._check_connection()
+        try:
+            cur = self._conn.cursor()
+            cur.execute(
+                """
+                SELECT
+                    COUNT(*) FILTER (WHERE m.timestamp >= now() - INTERVAL '7 days'),
+                    COUNT(*) FILTER (WHERE m.timestamp >= now() - INTERVAL '30 days')
+                FROM   messages m
+                JOIN   users    u ON u.id = m.author_id
+                WHERE  LOWER(u.name) = LOWER(%s)
+                AND  m.channel_id  = %s
+                """,
+                (username, channel_id),
+            )
+            row = cur.fetchone()
+            return (int(row[0]), int(row[1])) if row else None
+        except Exception as e:
+            print(f"Failed get_user_activity: {e}.")
+            return None
+
+    def get_user_silence_days(self, channel_id: int, username: str) -> Optional[int]:
+        """Число дней с последнего сообщения пользователя."""
+        self._check_connection()
+        try:
+            cur = self._conn.cursor()
+            cur.execute(
+                """
+                SELECT EXTRACT(DAY FROM now() - MAX(m.timestamp))::int
+                FROM   messages m
+                JOIN   users    u ON u.id = m.author_id
+                WHERE  LOWER(u.name) = LOWER(%s)
+                AND  m.channel_id  = %s
+                """,
+                (username, channel_id),
+            )
+            row = cur.fetchone()
+            return row[0] if row and row[0] is not None else None
+        except Exception as e:
+            print(f"Failed get_user_silence_days: {e}.")
+            return None
+
+
+    def get_user_neighbor(
+        self, channel_id: int, user_id: int
+    ) -> Optional[Tuple[str, int]]:
+        """
+        Пользователь, который чаще всего писал рядом (до или после)
+        с указанным в пределах одного канала.
+        """
+        self._check_connection()
+        try:
+            cur = self._conn.cursor()
+            cur.execute(
+                """
+                WITH ordered AS (
+                    SELECT
+                        author_id,
+                        LAG(author_id)  OVER (ORDER BY timestamp) AS prev_author,
+                        LEAD(author_id) OVER (ORDER BY timestamp) AS next_author
+                    FROM messages
+                    WHERE channel_id = %s
+                ),
+                neighbors AS (
+                    SELECT prev_author AS neighbor
+                    FROM   ordered
+                    WHERE  author_id   = %s
+                    AND  prev_author IS NOT NULL
+                    AND  prev_author != %s
+                    UNION ALL
+                    SELECT next_author
+                    FROM   ordered
+                    WHERE  author_id   = %s
+                    AND  next_author IS NOT NULL
+                    AND  next_author != %s
+                )
+                SELECT u.display_name, COUNT(*) AS cnt
+                FROM   neighbors n
+                JOIN   users     u ON u.id = n.neighbor
+                GROUP  BY u.id, u.display_name
+                ORDER  BY cnt DESC
+                LIMIT  1
+                """,
+                (channel_id, user_id, user_id, user_id, user_id),
+            )
+            row = cur.fetchone()
+            return (row[0], int(row[1])) if row else None
+        except Exception as e:
+            print(f"Failed get_user_neighbor: {e}.")
+            return None
+
+
+    def get_random_message_by_username(
+        self, channel_id: int, username: str
+    ) -> Optional[str]:
+        """
+        Случайное сообщение пользователя в конкретном канале.
+        Отличие от get_random_message_by_user: принимает username + channel_id.
+        """
+        self._check_connection()
+        try:
+            cur = self._conn.cursor()
+            cur.execute(
+                """
+                SELECT m.message
+                FROM   messages m
+                JOIN   users    u ON u.id = m.author_id
+                WHERE  LOWER(u.name) = LOWER(%s)
+                AND  m.channel_id  = %s
+                AND  m.message IS NOT NULL
+                ORDER  BY random()
+                LIMIT  1
+                """,
+                (username, channel_id),
+            )
+            row = cur.fetchone()
+            return row[0] if row else None
+        except Exception as e:
+            print(f"Failed get_random_message_by_username: {e}.")
+            return None
+
+
+    def get_favorite_word(
+        self, channel_id: int, username: str
+    ) -> Optional[Tuple[str, int]]:
+        """
+        Самое часто используемое слово пользователя.
+        Фильтр: длина > 3, только буквы (кириллица / латиница).
+        """
+        self._check_connection()
+        try:
+            cur = self._conn.cursor()
+            cur.execute(
+                """
+                WITH words AS (
+                    SELECT LOWER(w.word) AS word
+                    FROM   messages m
+                    JOIN   users    u ON u.id = m.author_id
+                    CROSS  JOIN LATERAL regexp_split_to_table(m.message, '\\s+') AS w(word)
+                    WHERE  LOWER(u.name) = LOWER(%s)
+                    AND  m.channel_id  = %s
+                    AND  m.message IS NOT NULL
+                )
+                SELECT word, COUNT(*) AS cnt
+                FROM   words
+                WHERE  LENGTH(word) > 3
+                AND  word ~ '^[а-яёa-z]+$'
+                GROUP  BY word
+                ORDER  BY cnt DESC
+                LIMIT  1
+                """,
+                (username, channel_id),
+            )
+            row = cur.fetchone()
+            return (row[0], int(row[1])) if row else None
+        except Exception as e:
+            print(f"Failed get_favorite_word: {e}.")
+            return None
+
+
+    def get_word_percentage(
+        self, channel_id: int, username: str, word: str
+    ) -> Optional[float]:
+        """
+        Процент сообщений пользователя, содержащих слово как отдельное слово.
+        Использует lookahead/lookbehind для границ слова (работает с кириллицей).
+        """
+        self._check_connection()
+        try:
+            # Строим паттерн: не-буква СЛОВО не-буква (case-insensitive через ~*)
+            pattern = (
+                r"(?<![а-яёА-ЯЁa-zA-Z])"
+                + re.escape(word)
+                + r"(?![а-яёА-ЯЁa-zA-Z])"
+            )
+            cur = self._conn.cursor()
+            cur.execute(
+                """
+                SELECT ROUND(
+                    COUNT(*) FILTER (WHERE m.message ~* %s)::numeric
+                    / NULLIF(COUNT(*), 0) * 100,
+                    2
+                )
+                FROM   messages m
+                JOIN   users    u ON u.id = m.author_id
+                WHERE  LOWER(u.name) = LOWER(%s)
+                AND  m.channel_id  = %s
+                AND  m.message IS NOT NULL
+                """,
+                (pattern, username, channel_id),
+            )
+            row = cur.fetchone()
+            return float(row[0]) if row and row[0] is not None else None
+        except Exception as e:
+            print(f"Failed get_word_percentage: {e}.")
             return None
     
     def _check_user_exist(self, id, display_name):

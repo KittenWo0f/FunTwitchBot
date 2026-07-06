@@ -7,6 +7,8 @@ from twitchio.channel import Channel
 from db_client import db_message_log_client
 import asyncio
 from os import path, remove
+from typing import Optional, Tuple
+from datetime import date
 
 import datetime
 import calendar
@@ -30,6 +32,7 @@ class twitch_bot(commands.Bot):
         super().__init__(token=ACCESS_TOKEN, prefix=PREFIX, initial_channels=INITIAL_CHANNELS)
         self.db_log_client.connect()
         self.disable_cmds_chanels: dict[str,bool] = {}
+        self._sausage_cache: dict[str, dict] = {}
 
     #Обработка сообщений
     async def event_message(self, message):        
@@ -618,6 +621,201 @@ class twitch_bot(commands.Bot):
         await ctx.reply(
             f"Пользователь {username_arg} написал «{word}» {count:,} раз(а) в этом чате."
         )
+
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
+    @commands.command(name="firstmessage")
+    async def first_message(self, ctx: commands.Context) -> None:
+        """!firstmessage @user — первое сообщение пользователя в канале с датой."""
+        parts = ctx.message.content.split(maxsplit=2)
+        username, err = self._parse_user_arg(parts[1:], "!firstmessage @имя_пользователя")
+        if err:
+            await ctx.reply(err)
+            return
+
+        channel_user = await ctx.channel.user()
+        result = self.db_log_client.get_first_message(channel_user.id, username)
+
+        if result is None:
+            await ctx.reply(f"Не нашёл ни одного сообщения от @{username} в этом чате NotLikeThis")
+            return
+
+        message, timestamp = result
+        date_str = timestamp.strftime("%d.%m.%Y")
+        preview = (message[:80] + "…") if len(message) > 80 else message
+        await ctx.reply(f"Первое сообщение @{username} от {date_str}: {preview}")
+
+
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
+    @commands.command(name="когда")
+    async def when_joined(self, ctx: commands.Context) -> None:
+        """!когда @user — сколько дней пользователь пишет в этом чате."""
+        parts = ctx.message.content.split(maxsplit=2)
+        username, err = self._parse_user_arg(parts[1:], "!когда @имя_пользователя")
+        if err:
+            await ctx.reply(err)
+            return
+
+        channel_user = await ctx.channel.user()
+        days = self.db_log_client.get_user_days_in_channel(channel_user.id, username)
+
+        if days is None:
+            await ctx.reply(f"Не нашёл @{username} в этом чате NotLikeThis")
+            return
+
+        word = self._pluralize_ru(days, "день", "дня", "дней")
+        await ctx.reply(f"@{username} пишет в этом чате уже {days:,} {word} PogChamp")
+
+
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
+    @commands.command(name="активность")
+    async def activity(self, ctx: commands.Context) -> None:
+        """!активность @user — число сообщений за 7 и 30 дней."""
+        parts = ctx.message.content.split(maxsplit=2)
+        username, err = self._parse_user_arg(parts[1:], "!активность @имя_пользователя")
+        if err:
+            await ctx.reply(err)
+            return
+
+        channel_user = await ctx.channel.user()
+        result = self.db_log_client.get_user_activity(channel_user.id, username)
+
+        if result is None:
+            await ctx.reply(f"Не удалось получить активность @{username} NotLikeThis")
+            return
+
+        cnt_7d, cnt_30d = result
+        await ctx.reply(
+            f"Активность @{username}: "
+            f"за 7 дней — {cnt_7d:,} сообщ., "
+            f"за 30 дней — {cnt_30d:,} сообщ."
+        )
+
+
+    @commands.cooldown(rate=1, per=15, bucket=commands.Bucket.channel)
+    @commands.command(name="рандом")
+    async def random_message(self, ctx: commands.Context) -> None:
+        """!рандом @user — случайное сообщение пользователя в этом чате."""
+        parts = ctx.message.content.split(maxsplit=2)
+        username, err = self._parse_user_arg(parts[1:], "!рандом @имя_пользователя")
+        if err:
+            await ctx.reply(err)
+            return
+
+        channel_user = await ctx.channel.user()
+        message = self.db_log_client.get_random_message_by_username(channel_user.id, username)
+
+        if message is None:
+            await ctx.reply(f"Не нашёл сообщений от @{username} в этом чате NotLikeThis")
+            return
+
+        await ctx.reply(f"@{username} однажды написал: {message}")
+
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
+    @commands.command(name="мертвец")
+    async def ghost(self, ctx: commands.Context) -> None:
+        """!мертвец @user — сколько дней пользователь молчит в чате."""
+        parts = ctx.message.content.split(maxsplit=2)
+        username, err = self._parse_user_arg(parts[1:], "!мертвец @имя_пользователя")
+        if err:
+            await ctx.reply(err)
+            return
+
+        channel_user = await ctx.channel.user()
+        days = self.db_log_client.get_user_silence_days(channel_user.id, username)
+
+        if days is None:
+            await ctx.reply(f"Не нашёл @{username} в этом чате NotLikeThis")
+            return
+
+        if days == 0:
+            await ctx.reply(f"@{username} писал сегодня, живой пока что PogChamp")
+            return
+
+        word = self._pluralize_ru(days, "день", "дня", "дней")
+        await ctx.reply(f"@{username} молчит уже {days:,} {word} monkaHmm")
+
+
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
+    @commands.command(name="сосед")
+    async def neighbor(self, ctx: commands.Context) -> None:
+        """!сосед — кто чаще всего писал рядом с тобой в этом чате."""
+        channel_user = await ctx.channel.user()
+        user_id = int(ctx.author.id)
+
+        result = self.db_log_client.get_user_neighbor(channel_user.id, user_id)
+
+        if result is None:
+            await ctx.reply(
+                f"Не удалось найти соседа @{ctx.author.name} в этом чате NotLikeThis"
+            )
+            return
+
+        neighbor_name, count = result
+        word = self._pluralize_ru(count, "раз", "раза", "раз")
+        await ctx.reply(
+            f"Сосед @{ctx.author.name} по чату — {neighbor_name} "
+            f"({count:,} {word} писал рядом) PogChamp"
+        )
+
+
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
+    @commands.command(name="любимоеслово")
+    async def favorite_word(self, ctx: commands.Context) -> None:
+        """!любимоеслово @user — самое часто используемое слово пользователя."""
+        parts = ctx.message.content.split(maxsplit=2)
+        username, err = self._parse_user_arg(parts[1:], "!любимоеслово @имя_пользователя")
+        if err:
+            await ctx.reply(err)
+            return
+
+        channel_user = await ctx.channel.user()
+        result = self.db_log_client.get_favorite_word(channel_user.id, username)
+
+        if result is None:
+            await ctx.reply(
+                f"Не удалось найти любимое слово @{username} в этом чате NotLikeThis"
+            )
+            return
+
+        word, count = result
+        times = self._pluralize_ru(count, "раз", "раза", "раз")
+        await ctx.reply(
+            f"Любимое слово @{username} — {word} "
+            f"({count:,} {times}) PogChamp"
+        )
+
+
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
+    @commands.command(name="процент")
+    async def word_percent(self, ctx: commands.Context) -> None:
+        """!процент @user слово — % сообщений пользователя, содержащих это слово."""
+        parts = ctx.message.content.split(maxsplit=3)
+        username, err = self._parse_user_arg(
+            parts[1:], "!процент @имя_пользователя слово"
+        )
+        if err:
+            await ctx.reply(err)
+            return
+
+        if len(parts) < 3:
+            await ctx.reply(
+                "Неверный формат! Используй: !процент @имя_пользователя слово"
+            )
+            return
+
+        word = parts[2]
+        channel_user = await ctx.channel.user()
+        pct = self.db_log_client.get_word_percentage(channel_user.id, username, word)
+
+        if pct is None:
+            await ctx.reply(
+                f"Не удалось подсчитать для @{username} NotLikeThis"
+            )
+            return
+
+        await ctx.reply(
+            f"{pct:g}% сообщений @{username} содержат слово {word}"
+        )
         
     @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
     @commands.command(name='год', aliases=['year', 'прогресс'])
@@ -628,18 +826,30 @@ class twitch_bot(commands.Bot):
         seconds_since_midnight = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
         await ctx.reply(f"@{ctx.author.name}, прогресс года: {(days_passed * 86400 + seconds_since_midnight) / ((365 + calendar.isleap(datetime.datetime.now().year)) * 86400) * 100:.10f}% catDespair")
         
-    @commands.cooldown(rate=1, per=600, bucket=commands.Bucket.user)
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.user)
     @commands.command(name='сосиска')
     async def sausage(self, ctx: commands.Context):
+        user_id = str(ctx.author.id)
+        today = date.today()
+
+        cached = self._sausage_cache.get(user_id)
+        if cached and cached["date"] == today:
+            sausage = cached["data"]
+        else:
+            sausage = self._generate_sausage()
+            self._sausage_cache[user_id] = {"date": today, "data": sausage}
+
+        await self._send_sausage(ctx, sausage)
+
+    def _generate_sausage(self) -> dict:
         length = random.randint(0, 37)
-        width = random.randint(1, 13)
-        
-        # === ФОРМЫ (расширил сильно) ===
+        width  = random.randint(1, 13)
+
         shapes = [
-            "идеально прямая", "прямая как стрела", "слегка изогнутая", 
+            "идеально прямая", "прямая как стрела", "слегка изогнутая",
             "элегантно изогнутая", "подозрительно кривоватая", "спиралевидная",
             "в форме банана", "волнообразная", "с характерным изгибом",
-            "как вопросительный знак", "с шишечкой на конце", 
+            "как вопросительный знак", "с шишечкой на конце",
             "с узелком посередине", "двойная (сиамские близнецы)",
             "сердцеобразная", "как будто пережила тяжёлую жизнь",
             "абсолютно асимметричная", "с лёгкой венозностью",
@@ -647,17 +857,16 @@ class twitch_bot(commands.Bot):
             "крючковатая", "с небольшим горбиком", "совершенно ровная",
             "в форме огурца", "закрученная в штопор", "с тремя изгибами",
             "каплевидная", "как сабля", "с лёгкой припухлостью",
-            "гармошкой", "в форме молнии", "классическая сосисочная"
+            "гармошкой", "в форме молнии", "классическая сосисочная",
         ]
 
-        # === СОСТОЯНИЯ (ещё больше) ===
         states = [
             "в полной боевой готовности", "отдыхает после трудов",
             "немного растеряна", "выглядит максимально уверенно",
             "сомневается в себе", "переживает не лучшие времена",
             "полна энтузиазма", "в пике своей формы", "скромно прячется",
             "доминирует в помещении", "игриво подмигивает",
-            "философски задумчива", "гиперактивная", 
+            "философски задумчива", "гиперактивная",
             "устала после вчерашнего", "готовится к великим делам",
             "в лёгкой депрессии", "максимально довольная жизнью",
             "нервно пульсирует", "спокойна и величественна",
@@ -665,10 +874,9 @@ class twitch_bot(commands.Bot):
             "стеснительно прячется", "гордая и независимая",
             "в творческом кризисе", "в состоянии нирваны",
             "готовa к труду и обороне", "просто существует",
-            "в боевом настроении", "расслабленная и счастливая"
+            "в боевом настроении", "расслабленная и счастливая",
         ]
 
-        # === РЕДКОСТЬ ===
         rarity = get_val_by_max_val({
             3:  "трагического уровня",
             7:  "обычной редкости",
@@ -678,10 +886,9 @@ class twitch_bot(commands.Bot):
             27: "мифическая",
             32: "божественного уровня",
             35: "ЛЕГЕНДАРНОГО КАЧЕСТВА",
-            37: "БОЖЕСТВЕННАЯ"
+            37: "БОЖЕСТВЕННАЯ",
         }, length)
 
-        # === ЭМОДЗИ ===
         emote = get_val_by_max_val({
             3:  "PoroSad",
             8:  "Stare",
@@ -691,17 +898,28 @@ class twitch_bot(commands.Bot):
             28: "EZ",
             32: "Pog",
             35: "POGCHAMP",
-            37: "HYPERPOG"
+            37: "HYPERPOG",
         }, length)
 
-        shape = random.choice(shapes)
-        state = random.choice(states)
+        return {
+            "length": length,
+            "width":  width,
+            "shape":  random.choice(shapes),
+            "state":  random.choice(states),
+            "rarity": rarity,
+            "emote":  emote,
+        }
 
-        # Специальные сообщения
+    async def _send_sausage(self, ctx: commands.Context, s: dict):
+        length = s["length"]
+        name   = ctx.author.name
+
         if length == 0:
-            await ctx.reply(f"@{ctx.author.name} имеет сосиску: "
-                            f"💀 Отсутствует (0 см)  📐 0 см\n"
-                            f"Это уже не сосиска, это философский вакуум...")
+            await ctx.reply(
+                f"@{name} имеет сосиску: "
+                f"💀 Отсутствует (0 см)  📐 0 см\n"
+                f"Это уже не сосиска, это философский вакуум..."
+            )
             return
 
         if length >= 34:
@@ -714,12 +932,12 @@ class twitch_bot(commands.Bot):
             extra = ""
 
         await ctx.reply(
-            f"@{ctx.author.name} имеет сосиску:\n"
-            f" {emote} Длина: {length} см\n"
-            f"📏 Ширина: {width} см\n"
-            f"🌀 Форма: {shape}\n"
-            f"✨ Редкость: {rarity}\n"
-            f"🧠 Состояние: {state}"
+            f"@{name} имеет сосиску:\n"
+            f" {s['emote']} Длина: {length} см\n"
+            f"📏 Ширина: {s['width']} см\n"
+            f"🌀 Форма: {s['shape']}\n"
+            f"✨ Редкость: {s['rarity']}\n"
+            f"🧠 Состояние: {s['state']}"
             f"{extra}"
         )
         
@@ -763,7 +981,7 @@ class twitch_bot(commands.Bot):
             await ctx.reply(f'Необходимо добавить текст сообщения в команде CaitThinking ')
                
     #Рутины
-    @routines.routine(time = datetime.datetime(year = 2024, month = 6, day = 1, hour = 18, minute = 00))
+    @routines.routine(time = datetime.datetime(year = 2024, month = 6, day = 1, hour = 18, minute = 56))
     async def ogey_of_day_routine(self):
         for ch in OGEY_OF_DAY_CHANNELS:
             channels = await self.fetch_users([ch])
@@ -834,3 +1052,33 @@ class twitch_bot(commands.Bot):
         if len(streams) == 0:
             return False
         return True
+     
+    def _parse_user_arg(
+        self, args: list, usage: str
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Парсит первый элемент args как @username.
+        Возвращает (username, None) при успехе или (None, error_msg) при ошибке.
+        """
+        if not args or not args[0].startswith("@"):
+            return None, f"Неверный формат! Используй: {usage}"
+        username = args[0][1:]
+        if not username:
+            return None, "Неверный формат! Укажи никнейм после «@»."
+        return username, None
+
+
+    @staticmethod
+    def _pluralize_ru(n: int, one: str, few: str, many: str) -> str:
+        """
+        Склонение существительного после числительного (русский язык).
+        Пример: _pluralize_ru(21, "день", "дня", "дней") → "день"
+        """
+        if 11 <= n % 100 <= 19:
+            return many
+        rem = n % 10
+        if rem == 1:
+            return one
+        if 2 <= rem <= 4:
+            return few
+        return many

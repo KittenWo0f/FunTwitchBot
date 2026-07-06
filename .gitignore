@@ -41,3 +41,4 @@ different_tests.py
 .vscode
 .venv/
 db_backups/
+.continue
