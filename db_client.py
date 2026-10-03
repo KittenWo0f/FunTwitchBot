@@ -127,7 +127,24 @@ class db_message_log_client():
         except Exception as e:
             print(f'Failed GetRandomUserByLastNHours in db: {e}.')
             return None
-        
+    
+    def get_random_message_by_ogey_or_streamer(self, channel_id: int):
+        self._check_connection()
+        query = """
+            SELECT message
+            FROM messages
+            WHERE author_id = COALESCE(
+                (SELECT id FROM ogeyofday_history WHERE channel_id = %s ORDER BY date DESC LIMIT 1),
+                %s
+            )
+            ORDER BY random()
+            LIMIT 1;
+        """
+        with self._conn.cursor() as cur:
+            cur.execute(query, (channel_id, channel_id))
+            row = cur.fetchone()
+            return row[0] if row else None
+    
     def update_ogey(self, channel_id, ogey_id):
         self._check_connection()
         try:

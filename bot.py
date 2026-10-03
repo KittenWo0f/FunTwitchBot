@@ -33,6 +33,8 @@ class twitch_bot(commands.Bot):
         self.db_log_client.connect()
         self.disable_cmds_chanels: dict[str,bool] = {}
         self._sausage_cache: dict[str, dict] = {}
+        self._varenik_cache: dict[str, dict] = {}
+        self._bulki_cache = {}
 
     #Обработка сообщений
     async def event_message(self, message):        
@@ -96,7 +98,8 @@ class twitch_bot(commands.Bot):
         # Ответ на сообщение если было обращение к боту
         if(str(f'@{self.nick}') in str(message.content).lower()):
             channel_user = await message.channel.user()
-            await ctx.reply(f'{self.db_log_client.get_random_message_by_user(channel_user.id)}')
+            reply_message = self.db_log_client.get_random_message_by_ogey_or_streamer(channel_user.id)
+            await ctx.reply(reply_message if reply_message else 'Сообщений пока нет')
             return
         
         # Опускание мубота
@@ -186,24 +189,7 @@ class twitch_bot(commands.Bot):
                 await ctx.reply(f'Я не помню когда в последний раз видел в чате {search_username} PoroSad')
         except:
             await ctx.reply(f'Что-то пошло не так. Проверьте имя искомого пользователя eeeh')
-    
-    @commands.cooldown(rate=1, per=300, bucket=commands.Bucket.member)
-    @commands.command(name='followage', aliases=['возрастотслеживания'])
-    async def followage(self, ctx: commands.Context):
-        if ctx.author.name == ctx.channel.name:
-            await ctx.reply(f'Ты не можешь отслеживать сам себя CoolStoryBob')
-            return
-        r = requests.get(f'https://api.ivr.fi/v2/twitch/subage/{ctx.author.name}/{ctx.channel.name}')
-        if r.status_code >= 400:
-            await ctx.reply(f'Не удалось выполнить запрос времени отслеживания PoroSad')
-            return
-        followedAt = r.json()["followedAt"]
-        if followedAt :
-            follow_age = datetime.datetime.now() - datetime.datetime.fromisoformat(followedAt.replace('Z',''))
-            await ctx.reply(f'Ты отслеживаешь канал {ctx.channel.name} {follow_age.days} дней SeemsGood')
-        else:
-            await ctx.reply(f'Ты не отслеживаешь канал {ctx.channel.name} D:')
-            
+        
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
     @commands.command(name='день')
     async def whatdaytoday(self, ctx: commands.Context):
@@ -940,6 +926,243 @@ class twitch_bot(commands.Bot):
             f"🧠 Состояние: {s['state']}"
             f"{extra}"
         )
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.user)
+    @commands.command(name='вареник')
+    async def varenik(self, ctx: commands.Context):
+        user_id = str(ctx.author.id)
+        today = date.today()
+
+        cached = self._varenik_cache.get(user_id)
+        if cached and cached["date"] == today:
+            varenik = cached["data"]
+        else:
+            varenik = self._generate_varenik()
+            self._varenik_cache[user_id] = {"date": today, "data": varenik}
+
+        await self._send_varenik(ctx, varenik)
+
+    def _generate_varenik(self) -> dict:
+        size = random.randint(0, 37)          # размер в см
+        thickness = random.randint(1, 13)     # толщина теста
+
+        shapes = [
+            "классический полумесяц", "идеально круглый", "слегка приплюснутый",
+            "с аккуратной косичкой", "неровный деревенский", "в форме сердца",
+            "треугольный", "как мини-пельмень", "с волнистым краем",
+            "перекошенный", "двойной (сиамские близнецы)", "в форме улыбки",
+            "с двумя защипами", "как маленький пирожок", "асимметричный",
+            "с рюшами по краю", "в форме ушка", "толстый и пузатый",
+            "тонкий и изящный", "как будто слепили в темноте",
+            "с идеальной защипкой", "в форме полумесяца с хвостиком",
+            "квадратный (экспериментальный)", "каплевидный", "гармошкой",
+            "с тремя складками", "в форме подковы", "классический украинский",
+            "скрученный", "как маленький вареничек", "с рваным краем",
+            "в форме банана", "почти идеальный",
+        ]
+
+        fillings = [
+            "с картошкой", "с творогом", "с вишней", "с капустой",
+            "с мясом", "с грибами", "с черникой", "с клубникой",
+            "с печенью", "с сыром", "с картошкой и грибами",
+            "с творогом и изюмом", "с вишней и шоколадом", "с капустой и морковью",
+            "с курицей", "с гречкой", "с маком", "с яблоком",
+            "с творогом и зеленью", "с картошкой и шкварками",
+            "с сюрпризом", "пустой (трагедия)", "с чем-то неизвестным",
+            "с тремя начинками сразу", "с вареньем", "с брынзой",
+        ]
+
+        states = [
+            "только что из кастрюли", "немного остыл", "горячий и опасный",
+            "идеально готов", "чуть переварен", "с хрустящей корочкой",
+            "в полном соку", "слегка прилип к тарелке", "готов к подвигам",
+            "выглядит максимально аппетитно", "сомневается в своей начинке",
+            "полн жизненных сил", "в пике своей формы", "скромно лежит",
+            "доминирует на тарелке", "игриво подмигивает сметаной",
+            "философски задумчив", "гиперактивный (прыгает в тарелке)",
+            "усталый после долгой варки", "готовится к великим делам",
+            "в лёгкой депрессии", "максимально довольный жизнью",
+            "нервно пульсирует", "спокоен и величественен",
+            "заряжен на 100%", "сонный и вялый", "агрессивно парит",
+            "стеснительно прячется под сметаной", "гордый и независимый",
+            "в творческом кризисе", "в состоянии нирваны",
+            "готов к труду и обороне", "просто существует",
+            "в боевом настроении", "расслабленный и счастливый",
+        ]
+
+        rarity = get_val_by_max_val({
+            3:  "трагического уровня",
+            7:  "обычной редкости",
+            12: "неплохой",
+            17: "редкий",
+            22: "эпический",
+            27: "мифический",
+            32: "божественного уровня",
+            35: "ЛЕГЕНДАРНОГО КАЧЕСТВА",
+            37: "БОЖЕСТВЕННЫЙ",
+        }, size)
+
+        emote = get_val_by_max_val({
+            3:  "PoroSad",
+            8:  "Stare",
+            13: "Hmm",
+            18: "Hmmege",
+            23: "SHTO",
+            28: "EZ",
+            32: "Pog",
+            35: "POGCHAMP",
+            37: "HYPERPOG",
+        }, size)
+
+        return {
+            "size": size,
+            "thickness": thickness,
+            "shape": random.choice(shapes),
+            "filling": random.choice(fillings),
+            "state": random.choice(states),
+            "rarity": rarity,
+            "emote": emote,
+        }
+
+    async def _send_varenik(self, ctx: commands.Context, v: dict):
+        size = v["size"]
+        name = ctx.author.name
+
+        if size == 0:
+            await ctx.reply(
+                f"@{name} имеет вареник: "
+                f"💀 Отсутствует (0 см)  📐 0 см\n"
+                f"Это уже не вареник, это философский вакуум..."
+            )
+            return
+
+        if size >= 34:
+            extra = "\n🌌 Это уже не вареник. Это оружие массового насыщения."
+        elif size >= 29:
+            extra = "\n🔥 Опасно мощный вареник."
+        elif size >= 25:
+            extra = "\n💪 Внушает уважение (и аппетит)."
+        else:
+            extra = ""
+
+        await ctx.reply(
+            f"@{name} имеет вареник: \n"
+            f"{v['emote']} Размер: {size} см\n"
+            f"📏 Толщина теста: {v['thickness']} мм\n"
+            f"🌀 Форма: {v['shape']}\n"
+            f"🥟 Начинка: {v['filling']}\n"
+            f"✨ Редкость: {v['rarity']}\n"
+            f"🧠 Состояние: {v['state']}"
+            f"{extra}"
+        )
+        
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.user)
+    @commands.command(name='булки')
+    async def bulki(self, ctx: commands.Context):
+        user_id = str(ctx.author.id)
+        today = date.today()
+
+        cached = self._bulki_cache.get(user_id)
+        if cached and cached["date"] == today:
+            bulki = cached["data"]
+        else:
+            bulki = self._generate_bulki()
+            self._bulki_cache[user_id] = {"date": today, "data": bulki}
+
+        await self._send_bulki(ctx, bulki)
+
+    def _generate_bulki(self) -> dict:
+        size = random.randint(0, 37)          # объём в баллах
+        elasticity = random.randint(1, 13)    # упругость
+
+        shapes = [
+            "идеально круглые", "квадратные (редкий генетический сбой)",
+            "асимметричные", "приплюснутые", "яйцевидные",
+            "с ямочками", "гладкие как шар", "угловатые",
+            "с выраженной складкой", "правильной геометрии",
+            "неровные", "каплевидные", "с лёгким перекосом",
+            "монолитные", "раздельные", "компактные",
+            "объёмные", "спортивной формы", "слегка обвисшие",
+            "гравитационно устойчивые", "с рельефом",
+            "почти квадратные", "классические", "необычной кривизны",
+            "плоские", "выпуклые", "идеальные по учебнику",
+        ]
+
+        conditions = [
+            "тёплые", "упругие после зала", "расслабленные",
+            "в тонусе", "требуют дополнительной прокачки",
+            "в отличной форме", "слегка помятые",
+            "накачаны на максимум", "в состоянии покоя",
+            "готовы к нагрузке", "уставшие после дня",
+            "полны энергии", "в боевой готовности",
+            "спокойные и уверенные", "гордо торчат",
+            "скромно прячутся", "доминируют в кадре",
+            "в творческом отпуске", "на пике формы",
+            "в лёгком застое", "максимально довольны собой",
+        ]
+
+        rarity = get_val_by_max_val({
+            3:  "трагического уровня",
+            7:  "обычной редкости",
+            12: "неплохие",
+            17: "редкие",
+            22: "эпические",
+            27: "мифические",
+            32: "божественного уровня",
+            35: "ЛЕГЕНДАРНЫЕ",
+            37: "БОЖЕСТВЕННЫЕ",
+        }, size)
+
+        emote = get_val_by_max_val({
+            3:  "PoroSad",
+            8:  "Stare",
+            13: "Hmm",
+            18: "Hmmege",
+            23: "SHTO",
+            28: "EZ",
+            32: "Pog",
+            35: "POGCHAMP",
+            37: "HYPERPOG",
+        }, size)
+
+        return {
+            "size": size,
+            "elasticity": elasticity,
+            "shape": random.choice(shapes),
+            "condition": random.choice(conditions),
+            "rarity": rarity,
+            "emote": emote,
+        }
+
+    async def _send_bulki(self, ctx: commands.Context, b: dict):
+        size = b["size"]
+        name = ctx.author.name
+
+        if size == 0:
+            await ctx.reply(
+                f"@{name} имеет булки: "
+                f"💀 Отсутствуют (0 баллов)\n"
+                f"Плоскость как у стены. Тревожно."
+            )
+            return
+
+        if size >= 34:
+            extra = "\n🌌 Это уже не булки. Это архитектурное достояние."
+        elif size >= 29:
+            extra = "\n🔥 Опасно мощные булки."
+        elif size >= 25:
+            extra = "\n💪 Внушают уважение (и зависть)."
+        else:
+            extra = ""
+
+        await ctx.reply(
+            f"@{name} имеет булки: \n"
+            f"{b['emote']} Объём: {size} баллов\n"
+            f"📏 Упругость: {b['elasticity']}/13\n"
+            f"🌀 Форма: {b['shape']}\n"
+            f"🧠 Состояние: {b['condition']}\n"
+            f"✨ Редкость: {b['rarity']}"
+            f"{extra}"
+        )
         
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.user)
     @commands.command(name='донос')
@@ -981,7 +1204,7 @@ class twitch_bot(commands.Bot):
             await ctx.reply(f'Необходимо добавить текст сообщения в команде CaitThinking ')
                
     #Рутины
-    @routines.routine(time = datetime.datetime(year = 2024, month = 6, day = 1, hour = 18, minute = 56))
+    @routines.routine(time = datetime.datetime(year = 2026, month = 8, day = 28, hour = 19, minute = 00))
     async def ogey_of_day_routine(self):
         for ch in OGEY_OF_DAY_CHANNELS:
             channels = await self.fetch_users([ch])
