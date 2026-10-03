@@ -1,51 +1,49 @@
-# Файл с настройками бота
-# Для использования переименовтать в bot_settings.py
-# Данные бота для инициализации. Получить можно тут - https://twitchtokengenerator.com/
-ACCESS_TOKEN = ""
-REFRESH_TOKEN = ""
+# Для использования переименовать в bot_settings.py (файл в .gitignore)
+
+# --- Приложение Twitch (https://dev.twitch.tv/console) ---
 CLIENT_ID = ""
 CLIENT_SECRET = ""
-#Список каналов на которых будет работать бот
+# Числовые id аккаунтов (узнать: GET helix/users?login=...). BOT_ID — аккаунт бота.
+BOT_ID = ""
+OWNER_ID = ""
+# Токен пользователя-бота. Нужны scope: user:read:chat user:write:chat user:bot
+# (https://twitchtokengenerator.com/). Используются только при первом запуске:
+# дальше актуальные токены автоматически хранятся в .tio.tokens.json
+ACCESS_TOKEN = ""
+REFRESH_TOKEN = ""
+
+# Каналы (логины), где работает бот. Права модератора не обязательны при токене пользователя-бота;
+# модератор или channel:bot от стримера нужны только если подписки создаются через app access token.
 INITIAL_CHANNELS = []
-#Список каналов на которых допустимы ссылки для бота
-ALLOW_URL = []
-#Список каналов в которых допустима копипаста (копирует некоторые фразы и смайлы, содержатся в custom_commands_with_tag и custom_copypast_cmd файла some_data)
-ALLOW_FLOOD = []
-#Каналы для которых генерируется !ogeyofday.
+ALLOW_URL = []          # каналы, где разрешены ссылки (!смайлы)
+ALLOW_FLOOD = []        # каналы с копипастой смайлов
 OGEY_OF_DAY_CHANNELS = ['gufovicky']
-#Префикс перед командами
 PREFIX = '!'
 
-# База данных
+# --- База данных ---
 DB_HOST = 'localhost'
 DB_PORT = 5432
 DB_NAME = 'twitchlogger'
 DB_USER = 'postgres'
 DB_PASSWORD = 'admin'
 
-# Телеграм
+# --- Telegram ---
 TELEGRAM_BOT_TOKEN = ''
 TELEGRAM_ADMIN_CHAT_ID = 0
 
-# Информационные команды для разных каналов
-telegrams = {
-    "channelName": "message"
-}
-
-boostys = {
-    "channelName": "message"
-}
-
-vks = {
-    "channelName": "message"
-}
-
-donats = {
-    "channelName": "message"
-}
-
-# Список пользоватлей для некоторых системных команд
-white_list = [] 
-
-# Запрос погоды
+# --- Внешние API ---
 OPENWEATHER_API_KEY = ''
+OPENROUTER_API_KEY = ''                      # раньше импортировался из bot_settings, но в sample его не было
+OPENROUTER_MODEL = 'openai/gpt-oss-120b:free'
+
+# --- Информационные команды: {"логин_канала": "сообщение"} ---
+telegrams = {"channelName": "message"}
+boostys = {}
+vks = {}
+donats = {}
+memes = {}
+steams = {}
+vods = {}
+
+# Логины пользователей для служебных команд (!отбой, !подъём, !темп)
+white_list = []

@@ -42,3 +42,4 @@ different_tests.py
 .venv/
 db_backups/
 .continue
+.tio.tokens.json

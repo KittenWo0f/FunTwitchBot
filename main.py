@@ -1,47 +1,37 @@
 import logging
-from logging.handlers import RotatingFileHandler
-from bot import twitch_bot
+import os
 import sys
+from logging.handlers import RotatingFileHandler
 
-# Настройка логгера
-logger = logging.getLogger()  # Получаем корневой логгер
-logger.setLevel(logging.WARNING)  # Уровень логирования (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+import twitchio
 
-# Создаём RotatingFileHandler
-handler = RotatingFileHandler(
-    'logs/bot.log',  # Имя файла
-    maxBytes=1024 * 1024 * 10,  # Максимальный размер файла (10 МБ)
-    backupCount=5,  # Количество сохраняемых старых файлов
-    encoding='utf-8',
-    mode='a'  # Режим записи ('a' — добавление)
-)
+from bot import config
+from bot.core import TwitchBot
+from bot.db import Database
+from bot.services.telegram_notifier import TelegramAdminNotifier
 
-# Формат сообщений
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
 
-# Добавляем обработчик к логгеру
-logger.addHandler(handler)
+def setup_logging() -> None:
+    os.makedirs("logs", exist_ok=True)
+    fmt = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s - %(message)s")
+    file_handler = RotatingFileHandler("logs/bot.log", maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8")
+    file_handler.setFormatter(fmt)
+    root = logging.getLogger()
+    root.setLevel(logging.WARNING)
+    root.addHandler(file_handler)
+    sys.excepthook = lambda *a: logging.critical("Необработанное исключение", exc_info=a)
 
-# Перенаправление stdout и stderr в логгер
-class LoggerWriter:
-    def __init__(self, level):
-        self.level = level
 
-    def write(self, message):
-        if message.strip():  # Игнорируем пустые строки
-            self.level(message)
+def main() -> None:
+    setup_logging()
+    logging.critical("=== Start bot ===")
+    db = Database(config.DB_HOST, config.DB_PORT, config.DB_NAME, config.DB_USER, config.DB_PASSWORD)
+    notifier = TelegramAdminNotifier(config.TELEGRAM_BOT_TOKEN, config.TELEGRAM_ADMIN_CHAT_ID)
+    bot = TwitchBot(db, notifier)
+    # with_adapter=False: не поднимаем локальный OAuth-сервер (бот работает на headless RPi,
+    # токены берутся из bot_settings.py и дальше автоматически обновляются/сохраняются)
+    bot.run(with_adapter=False)
 
-    def flush(self):
-        pass
 
-sys.stdout = LoggerWriter(logging.info)
-sys.stderr = LoggerWriter(logging.error)
-logging.critical(f'\n\n========================== Start bot ==========================\n LogLevel: {logging.getLevelName(logger.level)}\n')
-
-try:
-    bot = twitch_bot('twitch_bot')
-    bot.run()
-except Exception as e:
-    logging.error(f"An error occurred: {e}", exc_info=True)  # Логируем ошибку с traceback
-    sys.exit(1)
+if __name__ == "__main__":
+    main()
