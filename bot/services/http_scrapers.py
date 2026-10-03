@@ -11,7 +11,8 @@ from timezonefinder import TimezoneFinder
 
 from bot import config
 
-_UA = {"User-Agent": "Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
+_UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) "
+                         "Chrome/39.0.2171.95 Safari/537.36"}
 _TIMEOUT = aiohttp.ClientTimeout(total=10)
 _tf = TimezoneFinder()  # создание дорогое — держим один экземпляр
 
